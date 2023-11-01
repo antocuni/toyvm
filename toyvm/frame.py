@@ -42,3 +42,9 @@ class Frame:
         assert w_a.type == w_b.type == 'int'
         w_c = W_Int(w_a.value + w_b.value)
         self.push(w_c)
+
+    def op_store_local(self, name):
+        self.locals[name] = self.pop()
+
+    def op_load_local(self, name):
+        self.push(self.locals[name])

@@ -12,3 +12,14 @@ def test_simple():
     frame = Frame(code)
     w_res = frame.run()
     assert w_res == W_Int(6)
+
+def test_locals():
+    code = CodeObject([
+        OpCode('load_const', W_Int(2)),
+        OpCode('store_local', 'a'),
+        OpCode('load_local', 'a'),
+        OpCode('return')
+    ])
+    frame = Frame(code)
+    w_res = frame.run()
+    assert w_res == W_Int(2)
