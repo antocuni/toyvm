@@ -58,3 +58,24 @@ class TestFrame:
         frame = Frame(code)
         w_res = frame.run()
         assert w_res == W_Str('xxxx')
+
+    def test_br_if(self):
+        code = CodeObject('fn', [
+            OpCode('load_local', 'a'),      # 0
+            OpCode('load_const', W_Int(0)), # 1
+            OpCode('gt'),                   # 2
+            OpCode('br_if', 4, 6),          # 3
+            OpCode('load_const', W_Int(3)), # 4 "then"
+            OpCode('return'),               # 5
+            OpCode('load_const', W_Int(4)), # 6 "else"
+            OpCode('return')
+        ])
+        frame = Frame(code)
+        frame.locals['a'] = W_Int(10)
+        w_res = frame.run()
+        assert w_res == W_Int(3)
+        #
+        frame = Frame(code)
+        frame.locals['a'] = W_Int(-10)
+        w_res = frame.run()
+        assert w_res == W_Int(4)

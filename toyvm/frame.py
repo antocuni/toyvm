@@ -61,8 +61,25 @@ class Frame:
             assert False
         self.push(w_c)
 
+    def op_gt(self):
+        w_b = self.pop()
+        w_a = self.pop()
+        if w_a.type == w_b.type:
+            w_c = W_Int(int(w_a.value > w_b.value))
+        else:
+            assert False
+        self.push(w_c)
+
     def op_store_local(self, name):
         self.locals[name] = self.pop()
 
     def op_load_local(self, name):
         self.push(self.locals[name])
+
+    def op_br_if(self, then_pc, else_pc):
+        w_cond = self.pop()
+        assert w_cond.type == "int"
+        if w_cond.value:
+            self.pc = then_pc - 1
+        else:
+            self.pc = else_pc - 1
