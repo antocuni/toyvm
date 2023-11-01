@@ -24,7 +24,7 @@ def test_locals():
     w_res = frame.run()
     assert w_res == W_Int(2)
 
-def test_str_add():
+def test_add_str():
     code = CodeObject([
         OpCode('load_const', W_Str('hello ')),
         OpCode('load_const', W_Str('world')),
@@ -34,3 +34,25 @@ def test_str_add():
     frame = Frame(code)
     w_res = frame.run()
     assert w_res == W_Str('hello world')
+
+def test_mul_int():
+    code = CodeObject([
+        OpCode('load_const', W_Int(2)),
+        OpCode('load_const', W_Int(4)),
+        OpCode('mul'),
+        OpCode('return')
+    ])
+    frame = Frame(code)
+    w_res = frame.run()
+    assert w_res == W_Int(8)
+
+def test_mul_str():
+    code = CodeObject([
+        OpCode('load_const', W_Str('x')),
+        OpCode('load_const', W_Int(4)),
+        OpCode('mul'),
+        OpCode('return')
+    ])
+    frame = Frame(code)
+    w_res = frame.run()
+    assert w_res == W_Str('xxxx')

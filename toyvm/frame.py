@@ -47,6 +47,17 @@ class Frame:
             assert False
         self.push(w_c)
 
+    def op_mul(self):
+        w_b = self.pop()
+        w_a = self.pop()
+        if w_a.type == w_b.type == 'int':
+            w_c = W_Int(w_a.value * w_b.value)
+        elif w_a.type == 'str' and w_b.type == 'int':
+            w_c = W_Str(w_a.value * w_b.value)
+        else:
+            assert False
+        self.push(w_c)
+
     def op_store_local(self, name):
         self.locals[name] = self.pop()
 
