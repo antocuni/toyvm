@@ -18,8 +18,9 @@ class OpCode:
 
 class CodeObject:
 
-    def __init__(self, body):
+    def __init__(self, name, body):
+        self.name = name
         self.body = body
 
-    ## def emit(self, op):
-    ##     self.body.append(op)
+    def emit(self, op):
+        self.body.append(op)
