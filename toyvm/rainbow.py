@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from toyvm.objects import W_Object
-from toyvm.opcode import CodeObject
+from toyvm.opcode import CodeObject, OpCode
+from toyvm.frame import Frame
 
 def peval(code):
     """
@@ -14,45 +15,35 @@ def peval(code):
     return interp.out
 
 
-class AbstractVar:
-    color = None
-
-@dataclass
-class Green(AbstractVar):
-    color = 'green'
-    w_const: W_Object
-
-
-class Red(AbstractVar):
-    color = 'red'
-
 
 class RainbowInterpreter:
 
     def __init__(self, code):
         self.code = code
         self.out = CodeObject(code.name + '<peval>', [])
-        self.vstack = []
+        self.stack_length = 0
+        self.greenframe = Frame(code)
 
     def run(self):
         for op in self.code.body:
-            meth = getattr(self, f'op_{op.name}')
-            meth(op, *op.args)
+            if self.is_green(op):
+                self.greenframe.run_op(op)
+            else:
+                self.flush()
+                pops = op.num_pops()
+                assert self.stack_length >= pops # sanity check
+                self.stack_length -= pops
+                self.stack_length += op.num_pushes()
+                self.out.emit(op)
 
-    def push(self, var):
-        self.vstack.append(var)
+    def flush(self):
+        for w_value in self.greenframe.stack:
+            self.out.emit(OpCode('load_const', w_value))
+            self.stack_length += 1
+        self.greenframe.stack = []
 
-    def pop(self, expected_color):
-        w_val = self.vstack.pop()
-        assert w_val.color == expected_color
-        return w_val
-
-    def op_load_local(self, op, varname):
-        self.push(Red())
-        self.out.emit(op)
-
-    def op_add(self, op):
-        self.pop('red')
-        self.pop('red')
-        self.push(Red())
-        self.out.emit(op)
+    def is_green(self, op):
+        if not op.is_pure():
+            return False
+        pops = op.num_pops()
+        return len(self.greenframe.stack) >= pops

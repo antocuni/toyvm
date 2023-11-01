@@ -25,13 +25,16 @@ class Frame:
                 w_result = self.pop()
                 return w_result
             else:
-                meth_name = f'op_{op.name}'
-                meth = getattr(self, meth_name, None)
-                if meth is None:
-                    raise NotImplementedError(meth_name)
-                meth(*op.args)
+                self.run_op(op)
                 self.pc += 1
                 assert self.pc < len(self.code.body), 'no return?'
+
+    def run_op(self, op):
+        meth_name = f'op_{op.name}'
+        meth = getattr(self, meth_name, None)
+        if meth is None:
+            raise NotImplementedError(meth_name)
+        meth(*op.args)
 
     def op_load_const(self, w_value):
         self.push(w_value)
