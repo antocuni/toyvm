@@ -1,4 +1,4 @@
-from toyvm.objects import W_Object, W_Int
+from toyvm.objects import W_Object, W_Int, W_Str
 
 class Frame:
 
@@ -37,10 +37,14 @@ class Frame:
         self.push(w_value)
 
     def op_add(self):
-        w_a = self.pop()
         w_b = self.pop()
-        assert w_a.type == w_b.type == 'int'
-        w_c = W_Int(w_a.value + w_b.value)
+        w_a = self.pop()
+        if w_a.type == w_b.type == 'int':
+            w_c = W_Int(w_a.value + w_b.value)
+        elif w_a.type == w_b.type == 'str':
+            w_c = W_Str(w_a.value + w_b.value)
+        else:
+            assert False
         self.push(w_c)
 
     def op_store_local(self, name):
