@@ -34,7 +34,7 @@ class FuncDefCompiler:
         self.code.emit(OpCode(opname, *args))
 
     def unknown(self, node):
-        raise Exception("Unknown node: {node.__class__.__name__}")
+        raise Exception(f"Unknown node: {node.__class__.__name__}")
 
     def compile_stmt(self, stmt):
         name = stmt.__class__.__name__
@@ -58,3 +58,14 @@ class FuncDefCompiler:
         else:
             assert False
         self.emit('load_const', w_value)
+
+    def expr_BinOp(self, expr):
+        self.compile_expr(expr.left)
+        self.compile_expr(expr.right)
+        op = expr.op.__class__.__name__
+        if op == 'Add':
+            self.emit('add')
+        elif op == 'Mult':
+            self.emit('mul')
+        else:
+            self.unknown(expr.op)
