@@ -6,6 +6,7 @@ STACK_EFFECT = {
     'load_local': (0, 1),
     'store_local': (1, 0),
     'return': (1, 0),
+    'abort': (0, 0),
     'add': (2, 1),
     'mul': (2, 1),
     'gt': (2, 1),
@@ -56,3 +57,8 @@ class CodeObject:
 
     def emit(self, op):
         self.body.append(op)
+
+    def print(self):
+        for op in self.body:
+            parts = [op.name] + list(map(str, op.args))
+            print(' '.join(parts))

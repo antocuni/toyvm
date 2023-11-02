@@ -64,11 +64,12 @@ class TestFrame:
             OpCode('load_local', 'a'),      # 0
             OpCode('load_const', W_Int(0)), # 1
             OpCode('gt'),                   # 2
-            OpCode('br_if', 4, 6),          # 3
+            OpCode('br_if', 4, 6, 8),       # 3
             OpCode('load_const', W_Int(3)), # 4 "then"
             OpCode('return'),               # 5
             OpCode('load_const', W_Int(4)), # 6 "else"
-            OpCode('return')
+            OpCode('return'),               # 7
+            OpCode('abort', "unreachable"), # 8 "endif"
         ])
         frame = Frame(code)
         frame.locals['a'] = W_Int(10)

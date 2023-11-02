@@ -76,10 +76,23 @@ class Frame:
     def op_load_local(self, name):
         self.push(self.locals[name])
 
-    def op_br_if(self, then_pc, else_pc):
+    def op_br_if(self, then_pc, else_pc, endif_pc):
+        """
+        branch if
+
+        pop a value from the stack. If it's truthy, jump to then_pc, else
+        jumpt to else_pc; endif_pc is not actually used at runtime, but it
+        marks the end of the "else" branch: it's there only to make it easier
+        to do static analysis on the bytecode (e.g. by the rainbow
+        interpreter).
+        """
+        assert endif_pc >= else_pc
         w_cond = self.pop()
         assert w_cond.type == "int"
         if w_cond.value:
             self.pc = then_pc - 1
         else:
             self.pc = else_pc - 1
+
+    def op_abort(self, msg):
+        raise Exception(f"ABORT: {msg}")
