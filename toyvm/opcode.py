@@ -13,7 +13,9 @@ STACK_EFFECT = {
     'gt': (2, 1),
     'br_if': (1, 0),
     'br': (0, 0),
-    'make_tuple': (None, 1), # this is special, num_pops depends on the arg
+    'make_tuple': ('ARG', 1), # special, num_pops depends on the arg
+    'print': ('ARG', 1),
+    'pop': (1, 0),
 }
 
 PURE_OPS = set([
@@ -28,7 +30,7 @@ class OpCode:
     args: tuple
 
     def __init__(self, name: str, *args):
-        assert name in STACK_EFFECT
+        assert name in STACK_EFFECT, name
         self.name = name
         self.args = args
 

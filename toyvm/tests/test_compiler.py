@@ -1,5 +1,5 @@
 from toyvm.compiler import toy_compile
-from toyvm.objects import W_Int, W_Tuple
+from toyvm.objects import W_Int, W_Tuple, w_None
 
 def test_simple():
     w_func = toy_compile("""
@@ -108,3 +108,21 @@ def test_tuple():
     """)
     w_res = w_func.call()
     assert w_res == W_Tuple([W_Int(1), W_Int(2), W_Int(3)])
+
+
+def test_None():
+    w_func = toy_compile("""
+    def foo():
+        pass
+    """)
+    w_res = w_func.call()
+    assert w_res is w_None
+
+def test_print(capsys):
+    w_func = toy_compile("""
+    def foo():
+        print('hello', 42)
+    """)
+    w_func.call()
+    out, err = capsys.readouterr()
+    assert out == 'hello 42\n'

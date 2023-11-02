@@ -1,4 +1,4 @@
-from toyvm.objects import W_Object, W_Int, W_Str, W_Tuple
+from toyvm.objects import W_Object, W_Int, W_Str, W_Tuple, w_None
 
 class Frame:
 
@@ -14,6 +14,12 @@ class Frame:
 
     def pop(self):
         return self.stack.pop()
+
+    def popn(self, n):
+        assert len(self.stack) >= n
+        res = self.stack[-n:]
+        self.stack[-n:] = []
+        return res
 
     def run(self):
         while True:
@@ -101,9 +107,15 @@ class Frame:
         raise Exception(f"ABORT: {msg}")
 
     def op_make_tuple(self, n):
-        items_w = []
-        for i in range(n):
-            items_w.append(self.pop())
-        items_w.reverse()
+        items_w = self.popn(n)
         w_tuple = W_Tuple(items_w)
         self.push(w_tuple)
+
+    def op_print(self, n):
+        items_w = self.popn(n)
+        strs = [w_item.str() for w_item in items_w]
+        print(*strs)
+        self.push(w_None)
+
+    def op_pop(self):
+        self.pop()

@@ -1,7 +1,7 @@
 import ast
 import textwrap
 from toyvm.opcode import CodeObject, OpCode
-from toyvm.objects import W_Int, W_Str, W_Function
+from toyvm.objects import W_Int, W_Str, W_Function, w_None
 
 try:
     # add .pp() (pretty print) to all AST classes
@@ -39,6 +39,8 @@ class FuncDefCompiler:
     def compile(self):
         argnames = [a.arg for a in self.funcdef.args.args]
         self.compile_many_stmts(self.funcdef.body)
+        self.emit('load_const', w_None)
+        self.emit('return')
         return W_Function(self.funcdef.name, argnames, self.code)
 
     def compile_many_stmts(self, stmts):
@@ -60,6 +62,9 @@ class FuncDefCompiler:
         name = expr.__class__.__name__
         meth = getattr(self, f'expr_{name}', self.unknown_expr)
         meth(expr)
+
+    def stmt_Pass(self, stmt):
+        pass
 
     def stmt_Return(self, ret):
         self.compile_expr(ret.value)
@@ -83,6 +88,10 @@ class FuncDefCompiler:
         endif_pc = self.pc()
         br_if.args = (then_pc, else_pc, endif_pc)
         br.args = (endif_pc, )
+
+    def stmt_Expr(self, stmt):
+        self.compile_expr(stmt.value)
+        self.emit('pop')
 
     def get_w_const(self, expr):
         assert isinstance(expr, ast.Constant)
@@ -115,3 +124,9 @@ class FuncDefCompiler:
         for item in expr.elts:
             self.compile_expr(item)
         self.emit('make_tuple', len(expr.elts))
+
+    def expr_Call(self, expr):
+        assert expr.func.id == 'print' # only print supported so far
+        for arg in expr.args:
+            self.compile_expr(arg)
+        self.emit('print', len(expr.args))

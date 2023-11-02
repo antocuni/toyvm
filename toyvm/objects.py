@@ -12,6 +12,9 @@ class W_Int(W_Object):
     def __repr__(self):
         return f'W_Int({self.value})'
 
+    def str(self):
+        return str(self.value)
+
 @dataclass
 class W_Str(W_Object):
     type = 'str'
@@ -19,6 +22,9 @@ class W_Str(W_Object):
 
     def __repr__(self):
         return f'W_Str({self.value})'
+
+    def str(self):
+        return self.value
 
 
 @dataclass
@@ -38,8 +44,25 @@ class W_Function(W_Object):
         #
         return frame.run()
 
+    def str(self):
+        return f"<toy function '{self.name}'>"
+
 
 @dataclass
 class W_Tuple(W_Object):
     type = 'tuple'
     items_w: list[W_Object]
+
+    def str(self):
+        parts = [w_item.str() for w_item in self.items_w]
+        return '(%s)' % ', '.join(parts)
+
+
+@dataclass
+class W_NoneType(W_Object):
+    type = 'NoneType'
+
+    def str(self):
+        return '<toy None>'
+
+w_None = W_NoneType()
