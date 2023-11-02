@@ -76,6 +76,9 @@ class Frame:
     def op_load_local(self, name):
         self.push(self.locals[name])
 
+    def op_br(self, pc):
+        self.pc = pc - 1
+
     def op_br_if(self, then_pc, else_pc, endif_pc):
         """
         branch if

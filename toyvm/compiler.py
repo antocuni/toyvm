@@ -28,14 +28,22 @@ class FuncDefCompiler:
         # **kwargs
         self.code = CodeObject(funcdef.name, [])
 
+    def emit(self, opname, *args):
+        op = OpCode(opname, *args)
+        self.code.emit(op)
+        return op
+
+    def pc(self):
+        return len(self.code.body)
+
     def compile(self):
         argnames = [a.arg for a in self.funcdef.args.args]
-        for stmt in self.funcdef.body:
-            self.compile_stmt(stmt)
+        self.compile_many_stmts(self.funcdef.body)
         return W_Function(self.funcdef.name, argnames, self.code)
 
-    def emit(self, opname, *args):
-        self.code.emit(OpCode(opname, *args))
+    def compile_many_stmts(self, stmts):
+        for stmt in stmts:
+            self.compile_stmt(stmt)
 
     def unknown_expr(self, node):
         raise Exception(f"Unknown node: expr_{node.__class__.__name__}")
@@ -63,6 +71,18 @@ class FuncDefCompiler:
         assert isinstance(name, ast.Name)
         self.compile_expr(stmt.value)
         self.emit('store_local', name.id)
+
+    def stmt_If(self, stmt):
+        self.compile_expr(stmt.test)
+        br_if = self.emit('br_if', None, None, None)
+        then_pc = self.pc()
+        self.compile_many_stmts(stmt.body)
+        br = self.emit('br', None)
+        else_pc = self.pc()
+        self.compile_many_stmts(stmt.orelse)
+        endif_pc = self.pc()
+        br_if.args = (then_pc, else_pc, endif_pc)
+        br.args = (endif_pc, )
 
     def expr_Constant(self, expr):
         if isinstance(expr.value, int):

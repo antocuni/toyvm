@@ -12,6 +12,7 @@ STACK_EFFECT = {
     'mul': (2, 1),
     'gt': (2, 1),
     'br_if': (1, 0),
+    'br': (0, 0),
 }
 
 PURE_OPS = set([
@@ -61,8 +62,8 @@ class CodeObject:
 
     def dump(self):
         lines = []
-        for op in self.body:
-            parts = [op.name] + list(map(str, op.args))
+        for pc, op in enumerate(self.body):
+            parts = ['%2d:' % pc, op.name] + list(map(str, op.args))
             lines.append(' '.join(parts))
         return '\n'.join(lines)
 
@@ -70,6 +71,6 @@ class CodeObject:
         print(self.dump())
 
     def equals(self, expected):
-        dumped = self.dump()
+        dumped = textwrap.dedent(self.dump())
         expected = textwrap.dedent(expected).strip()
         return dumped == expected
