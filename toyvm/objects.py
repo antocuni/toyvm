@@ -62,6 +62,9 @@ class W_Tuple(W_Object):
 class W_NoneType(W_Object):
     type = 'NoneType'
 
+    def __repr__(self):
+        return 'w_None'
+
     def str(self):
         return '<toy None>'
 

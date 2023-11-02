@@ -75,5 +75,7 @@ class CodeObject:
 
     def equals(self, expected):
         dumped = textwrap.dedent(self.dump())
-        expected = textwrap.dedent(expected).strip()
+        expected = textwrap.dedent(expected).strip('\n')
+        if dumped != expected:
+            import pdb;pdb.set_trace()
         return dumped == expected
