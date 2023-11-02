@@ -1,7 +1,7 @@
 import ast
 import textwrap
 from toyvm.opcode import CodeObject, OpCode
-from toyvm.objects import W_Int, W_Str
+from toyvm.objects import W_Int, W_Str, W_Function
 
 try:
     # add .pp() (pretty print) to all AST classes
@@ -12,33 +12,29 @@ except ImportError:
 
 def toy_compile(src, filename='<unknown>'):
     src = textwrap.dedent(src)
-    comp = ToyCompiler(src, filename)
-    comp.compile()
-    return comp.code
+    root = ast.parse(src, filename)
+    assert len(root.body) == 1
+    funcdef = root.body[0]
+    assert isinstance(funcdef, ast.FunctionDef)
+    comp = FuncDefCompiler(funcdef)
+    return comp.compile()
 
-class ToyCompiler:
+class FuncDefCompiler:
 
-    def __init__(self, src, filename):
-        self.src = src
-        self.filename = filename
+    def __init__(self, funcdef):
+        self.funcdef = funcdef
         self.code = CodeObject('fn', [])
+
+    def compile(self):
+        for stmt in self.funcdef.body:
+            self.compile_stmt(stmt)
+        return W_Function(self.funcdef.name, self.code)
 
     def emit(self, opname, *args):
         self.code.emit(OpCode(opname, *args))
 
-    def compile(self):
-        root = ast.parse(self.src, self.filename)
-        assert len(root.body) == 1
-        funcdef = root.body[0]
-        assert isinstance(funcdef, ast.FunctionDef)
-        self.compile_funcdef(funcdef)
-
     def unknown(self, node):
         raise Exception("Unknown node: {node.__class__.__name__}")
-
-    def compile_funcdef(self, funcdef):
-        for stmt in funcdef.body:
-            self.compile_stmt(stmt)
 
     def compile_stmt(self, stmt):
         name = stmt.__class__.__name__
