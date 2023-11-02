@@ -23,12 +23,16 @@ class FuncDefCompiler:
 
     def __init__(self, funcdef):
         self.funcdef = funcdef
+        # ok, this is very limited, we don't support any of the advanced
+        # argument passing features of python, and we just ignore *args and
+        # **kwargs
         self.code = CodeObject('fn', [])
 
     def compile(self):
+        argnames = [a.arg for a in self.funcdef.args.args]
         for stmt in self.funcdef.body:
             self.compile_stmt(stmt)
-        return W_Function(self.funcdef.name, self.code)
+        return W_Function(self.funcdef.name, argnames, self.code)
 
     def emit(self, opname, *args):
         self.code.emit(OpCode(opname, *args))

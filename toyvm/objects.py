@@ -25,9 +25,15 @@ class W_Str(W_Object):
 class W_Function(W_Object):
     type = 'function'
     name: str
+    argnames: list[str]
     code: CodeObject
 
-    def call(self):
+    def call(self, *args_w):
         from toyvm.frame import Frame
         frame = Frame(self.code)
+        # setup parameters
+        assert len(self.argnames) == len(args_w)
+        for varname, w_arg in zip(self.argnames, args_w):
+            frame.locals[varname] = w_arg
+        #
         return frame.run()

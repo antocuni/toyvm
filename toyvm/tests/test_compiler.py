@@ -40,3 +40,17 @@ def test_locals():
     return
     """)
     assert w_func.call() == W_Int(4)
+
+
+def test_func_params():
+    w_func = toy_compile("""
+    def foo(a, b):
+        return a + b
+    """)
+    assert w_func.code.equals("""
+    load_local a
+    load_local b
+    add
+    return
+    """)
+    assert w_func.call(W_Int(10), W_Int(20)) == W_Int(30)
