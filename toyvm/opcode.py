@@ -1,3 +1,4 @@
+import textwrap
 from dataclasses import dataclass
 
 STACK_EFFECT = {
@@ -58,7 +59,17 @@ class CodeObject:
     def emit(self, op):
         self.body.append(op)
 
-    def print(self):
+    def dump(self):
+        lines = []
         for op in self.body:
             parts = [op.name] + list(map(str, op.args))
-            print(' '.join(parts))
+            lines.append(' '.join(parts))
+        return '\n'.join(lines)
+
+    def pp(self):
+        print(self.dump())
+
+    def equals(self, expected):
+        dumped = self.dump()
+        expected = textwrap.dedent(expected).strip()
+        return dumped == expected
