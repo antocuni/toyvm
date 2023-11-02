@@ -26,7 +26,7 @@ class FuncDefCompiler:
         # ok, this is very limited, we don't support any of the advanced
         # argument passing features of python, and we just ignore *args and
         # **kwargs
-        self.code = CodeObject('fn', [])
+        self.code = CodeObject(funcdef.name, [])
 
     def compile(self):
         argnames = [a.arg for a in self.funcdef.args.args]

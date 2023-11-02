@@ -6,6 +6,8 @@ def test_simple():
     def foo():
         return 42
     """)
+    assert w_func.name == 'foo'
+    assert w_func.code.name == 'foo'
     assert w_func.code.equals("""
     load_const W_Int(42)
     return
