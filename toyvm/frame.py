@@ -1,4 +1,4 @@
-from toyvm.objects import W_Object, W_Int, W_Str
+from toyvm.objects import W_Object, W_Int, W_Str, W_Tuple
 
 class Frame:
 
@@ -99,3 +99,11 @@ class Frame:
 
     def op_abort(self, msg):
         raise Exception(f"ABORT: {msg}")
+
+    def op_make_tuple(self, n):
+        items_w = []
+        for i in range(n):
+            items_w.append(self.pop())
+        items_w.reverse()
+        w_tuple = W_Tuple(items_w)
+        self.push(w_tuple)

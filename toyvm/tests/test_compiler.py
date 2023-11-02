@@ -1,5 +1,5 @@
 from toyvm.compiler import toy_compile
-from toyvm.objects import W_Int
+from toyvm.objects import W_Int, W_Tuple
 
 def test_simple():
     w_func = toy_compile("""
@@ -99,3 +99,12 @@ def test_if_else():
     """)
     assert w_func.call(W_Int(0)) == W_Int(20)
     assert w_func.call(W_Int(1)) == W_Int(10)
+
+
+def test_tuple():
+    w_func = toy_compile("""
+    def foo():
+        return (1, 2, 3)
+    """)
+    w_res = w_func.call()
+    assert w_res == W_Tuple([W_Int(1), W_Int(2), W_Int(3)])

@@ -37,3 +37,9 @@ class W_Function(W_Object):
             frame.locals[varname] = w_arg
         #
         return frame.run()
+
+
+@dataclass
+class W_Tuple(W_Object):
+    type = 'tuple'
+    items_w: list[W_Object]

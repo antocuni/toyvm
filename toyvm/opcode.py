@@ -13,6 +13,7 @@ STACK_EFFECT = {
     'gt': (2, 1),
     'br_if': (1, 0),
     'br': (0, 0),
+    'make_tuple': (None, 1), # this is special, num_pops depends on the arg
 }
 
 PURE_OPS = set([

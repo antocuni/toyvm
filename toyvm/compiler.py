@@ -84,14 +84,18 @@ class FuncDefCompiler:
         br_if.args = (then_pc, else_pc, endif_pc)
         br.args = (endif_pc, )
 
-    def expr_Constant(self, expr):
+    def get_w_const(self, expr):
+        assert isinstance(expr, ast.Constant)
         if isinstance(expr.value, int):
-            w_value = W_Int(expr.value)
+            return W_Int(expr.value)
         elif isinstance(expr.value, str):
-            w_value = W_Str(expr.value)
+            return W_Str(expr.value)
         else:
             assert False
-        self.emit('load_const', w_value)
+
+    def expr_Constant(self, expr):
+        w_const = self.get_w_const(expr)
+        self.emit('load_const', w_const)
 
     def expr_BinOp(self, expr):
         self.compile_expr(expr.left)
@@ -106,3 +110,8 @@ class FuncDefCompiler:
 
     def expr_Name(self, expr):
         self.emit('load_local', expr.id)
+
+    def expr_Tuple(self, expr):
+        for item in expr.elts:
+            self.compile_expr(item)
+        self.emit('make_tuple', len(expr.elts))
