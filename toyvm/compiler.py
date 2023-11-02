@@ -33,22 +33,32 @@ class FuncDefCompiler:
     def emit(self, opname, *args):
         self.code.emit(OpCode(opname, *args))
 
-    def unknown(self, node):
-        raise Exception(f"Unknown node: {node.__class__.__name__}")
+    def unknown_expr(self, node):
+        raise Exception(f"Unknown node: expr_{node.__class__.__name__}")
+
+    def unknown_stmt(self, node):
+        raise Exception(f"Unknown node: stmt_{node.__class__.__name__}")
 
     def compile_stmt(self, stmt):
         name = stmt.__class__.__name__
-        meth = getattr(self, f'stmt_{name}', self.unknown)
+        meth = getattr(self, f'stmt_{name}', self.unknown_stmt)
         meth(stmt)
 
     def compile_expr(self, expr):
         name = expr.__class__.__name__
-        meth = getattr(self, f'expr_{name}', self.unknown)
+        meth = getattr(self, f'expr_{name}', self.unknown_expr)
         meth(expr)
 
     def stmt_Return(self, ret):
         self.compile_expr(ret.value)
         self.emit('return')
+
+    def stmt_Assign(self, stmt):
+        assert len(stmt.targets) == 1
+        name = stmt.targets[0]
+        assert isinstance(name, ast.Name)
+        self.compile_expr(stmt.value)
+        self.emit('store_local', name.id)
 
     def expr_Constant(self, expr):
         if isinstance(expr.value, int):
@@ -69,3 +79,6 @@ class FuncDefCompiler:
             self.emit('mul')
         else:
             self.unknown(expr.op)
+
+    def expr_Name(self, expr):
+        self.emit('load_local', expr.id)

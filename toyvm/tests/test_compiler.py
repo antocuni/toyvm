@@ -26,3 +26,17 @@ def test_add_mul():
     return
     """)
     assert w_func.call() == W_Int(7)
+
+def test_locals():
+    w_func = toy_compile("""
+    def foo():
+        a = 4
+        return a
+    """)
+    assert w_func.code.equals("""
+    load_const W_Int(4)
+    store_local a
+    load_local a
+    return
+    """)
+    assert w_func.call() == W_Int(4)
