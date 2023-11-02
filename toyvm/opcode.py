@@ -16,6 +16,8 @@ STACK_EFFECT = {
     'make_tuple': ('ARG', 1), # special, num_pops depends on the arg
     'print': ('ARG', 1),
     'pop': (1, 0),
+    'get_iter': (1, 0),
+    'for_iter': (0, 0),
 }
 
 PURE_OPS = set([

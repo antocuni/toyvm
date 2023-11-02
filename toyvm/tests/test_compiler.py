@@ -140,3 +140,25 @@ class TestCompiler:
         w_func.call()
         out, err = capsys.readouterr()
         assert out == 'hello 42\n'
+
+    def test_for(self, capsys):
+        w_func = toy_compile("""
+        def foo(tup):
+            for x in tup:
+                print(x)
+        """)
+        assert w_func.code.equals("""
+         0: load_local tup
+         1: get_iter @iter0
+         2: for_iter @iter0 x 7
+         3: load_local x
+         4: print 1
+         5: pop
+         6: br 2
+         7: load_const w_None
+         8: return
+        """)
+        w_tup = W_Tuple([W_Int(1), W_Int(2), W_Int(3)])
+        w_func.call(w_tup)
+        out, err = capsys.readouterr()
+        assert out == '1\n2\n3\n'

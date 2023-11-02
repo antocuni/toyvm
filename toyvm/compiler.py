@@ -47,11 +47,11 @@ class FuncDefCompiler:
         for stmt in stmts:
             self.compile_stmt(stmt)
 
-    def unknown_expr(self, node):
-        raise Exception(f"Unknown node: expr_{node.__class__.__name__}")
+    def unknown_stmt(self, stmt):
+        raise NotImplementedError(f"stmt_{stmt.__class__.__name__}")
 
-    def unknown_stmt(self, node):
-        raise Exception(f"Unknown node: stmt_{node.__class__.__name__}")
+    def unknown_expr(self, expr):
+        raise NotImplementedError(f"expr_{expr.__class__.__name__}")
 
     def compile_stmt(self, stmt):
         name = stmt.__class__.__name__
@@ -72,10 +72,9 @@ class FuncDefCompiler:
 
     def stmt_Assign(self, stmt):
         assert len(stmt.targets) == 1
-        name = stmt.targets[0]
-        assert isinstance(name, ast.Name)
+        name = self.get_Name(stmt.targets[0])
         self.compile_expr(stmt.value)
-        self.emit('store_local', name.id)
+        self.emit('store_local', name)
 
     def stmt_If(self, stmt):
         self.compile_expr(stmt.test)
@@ -93,6 +92,18 @@ class FuncDefCompiler:
         self.compile_expr(stmt.value)
         self.emit('pop')
 
+    def stmt_For(self, stmt):
+        target = self.get_Name(stmt.target)
+        self.compile_expr(stmt.iter)
+        itername = '@iter0' # XXX unique name
+        self.emit('get_iter', itername)
+        loop_pc = self.pc()
+        for_iter_op = self.emit('for_iter', itername, target, None)
+        self.compile_many_stmts(stmt.body)
+        self.emit('br', loop_pc)
+        endfor_pc = self.pc()
+        for_iter_op.args = (itername, target, endfor_pc)
+
     def get_w_const(self, expr):
         assert isinstance(expr, ast.Constant)
         if isinstance(expr.value, int):
@@ -101,6 +112,10 @@ class FuncDefCompiler:
             return W_Str(expr.value)
         else:
             assert False
+
+    def get_Name(self, expr):
+        assert isinstance(expr, ast.Name)
+        return expr.id
 
     def expr_Constant(self, expr):
         w_const = self.get_w_const(expr)

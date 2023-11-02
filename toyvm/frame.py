@@ -119,3 +119,17 @@ class Frame:
 
     def op_pop(self):
         self.pop()
+
+    def op_get_iter(self, itername):
+        w_iterable = self.pop()
+        w_iter = w_iterable.get_iter()
+        self.locals[itername] = w_iter
+
+    def op_for_iter(self, itername, targetname, endfor_pc):
+        w_iter = self.locals[itername]
+        w_value = w_iter.iter_next()
+        if w_value == 'STOP':
+            del self.locals[itername]
+            self.pc = endfor_pc - 1
+        else:
+            self.locals[targetname] = w_value

@@ -4,6 +4,10 @@ from toyvm.opcode import CodeObject
 class W_Object:
     type = 'object'
 
+    def get_iter(self):
+        raise TypeError(f"cannot call get_iter on instances of '{self.type}'")
+
+
 @dataclass
 class W_Int(W_Object):
     type = 'int'
@@ -56,6 +60,21 @@ class W_Tuple(W_Object):
     def str(self):
         parts = [w_item.str() for w_item in self.items_w]
         return '(%s)' % ', '.join(parts)
+
+    def get_iter(self):
+        return W_TupleIterator(self)
+
+
+@dataclass
+class W_TupleIterator(W_Object):
+    type = 'tuple_iterator'
+    w_tuple: W_Tuple
+
+    def __post_init__(self):
+        self._iter = iter(self.w_tuple.items_w)
+
+    def iter_next(self):
+        return next(self._iter, 'STOP')
 
 
 @dataclass
