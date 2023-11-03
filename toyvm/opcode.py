@@ -45,6 +45,10 @@ class OpCode:
         else:
             return f'<OpCode {self.name}>'
 
+    def str(self):
+        parts = [self.name] + list(map(str, self.args))
+        return ' '.join(parts)
+
     def is_pure(self):
         return self.name in PURE_OPS
 
@@ -74,8 +78,7 @@ class CodeObject:
     def dump(self):
         lines = []
         for pc, op in enumerate(self.body):
-            parts = ['%2d:' % pc, op.name] + list(map(str, op.args))
-            lines.append(' '.join(parts))
+            lines.append(f'{pc:2d}: {op.str()}')
         return '\n'.join(lines)
 
     def pp(self):
