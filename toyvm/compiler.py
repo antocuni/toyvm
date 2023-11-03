@@ -141,7 +141,13 @@ class FuncDefCompiler:
         self.emit('make_tuple', len(expr.elts))
 
     def expr_Call(self, expr):
-        assert expr.func.id == 'print' # only print supported so far
+        funcname = self.get_Name(expr.func)
         for arg in expr.args:
             self.compile_expr(arg)
-        self.emit('print', len(expr.args))
+        if funcname == 'print':
+            self.emit('print', len(expr.args))
+        elif funcname == 'UNROLL':
+            assert len(expr.args) == 1
+            self.emit('mark_unroll')
+        else:
+            assert False, f'unsupported function: {funcname}'

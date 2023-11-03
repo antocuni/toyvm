@@ -56,19 +56,24 @@ class W_Function(W_Object):
 class W_Tuple(W_Object):
     type = 'tuple'
     items_w: list[W_Object]
+    _unroll = False
 
     def str(self):
         parts = [w_item.str() for w_item in self.items_w]
         return '(%s)' % ', '.join(parts)
 
     def get_iter(self):
-        return W_TupleIterator(self)
+        return W_TupleIterator(self, self._unroll)
+
+    def mark_unroll(self):
+        self._unroll = True
 
 
 @dataclass
 class W_TupleIterator(W_Object):
     type = 'tuple_iterator'
     w_tuple: W_Tuple
+    unroll: bool
 
     def __post_init__(self):
         self._iter = iter(self.w_tuple.items_w)

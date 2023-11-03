@@ -18,12 +18,15 @@ STACK_EFFECT = {
     'pop': (1, 0),
     'get_iter': (1, 0),
     'for_iter': (0, 0),
+    'mark_unroll': (1, 1),
 }
 
 PURE_OPS = set([
     'load_const',
     'add',
-    'mul'
+    'mul',
+    'make_tuple',
+    'mark_unroll',
 ])
 
 @dataclass
@@ -46,7 +49,10 @@ class OpCode:
         return self.name in PURE_OPS
 
     def num_pops(self):
-        return STACK_EFFECT[self.name][0]
+        pops = STACK_EFFECT[self.name][0]
+        if pops == 'ARG':
+            return self.args[0]
+        return pops
 
     def num_pushes(self):
         return STACK_EFFECT[self.name][1]

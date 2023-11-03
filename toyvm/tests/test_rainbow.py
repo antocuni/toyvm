@@ -1,6 +1,7 @@
 from toyvm.rainbow import peval
 from toyvm.opcode import OpCode, CodeObject
 from toyvm.objects import W_Int, W_Str
+from toyvm.compiler import toy_compile
 
 class TestRainbow:
 

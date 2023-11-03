@@ -162,3 +162,15 @@ class TestCompiler:
         w_func.call(w_tup)
         out, err = capsys.readouterr()
         assert out == '1\n2\n3\n'
+
+    def test_for_unroll(self):
+        w_func = toy_compile("""
+        def foo(tup):
+            a = 0
+            for x in UNROLL(tup):
+                a = a + x
+            return a
+        """)
+        w_tup = W_Tuple([W_Int(1), W_Int(2), W_Int(3)])
+        w_res = w_func.call(w_tup)
+        assert w_res == W_Int(6)
