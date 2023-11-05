@@ -74,7 +74,10 @@ class FuncDefCompiler:
         assert len(stmt.targets) == 1
         name = self.get_Name(stmt.targets[0])
         self.compile_expr(stmt.value)
-        self.emit('store_local', name)
+        if name.isupper():
+            self.emit('store_local_green', name)
+        else:
+            self.emit('store_local', name)
 
     def stmt_If(self, stmt):
         self.compile_expr(stmt.test)
@@ -133,7 +136,11 @@ class FuncDefCompiler:
             self.unknown(expr.op)
 
     def expr_Name(self, expr):
-        self.emit('load_local', expr.id)
+        name = expr.id
+        if name.isupper():
+            self.emit('load_local_green', name)
+        else:
+            self.emit('load_local', name)
 
     def expr_Tuple(self, expr):
         for item in expr.elts:

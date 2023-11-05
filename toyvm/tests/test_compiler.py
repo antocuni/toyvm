@@ -51,6 +51,21 @@ class TestCompiler:
         """)
         assert w_func.call() == W_Int(4)
 
+    def test_locals_green(self):
+        w_func = toy_compile("""
+        def foo():
+            A = 4
+            return A
+        """)
+        assert w_func.code.equals("""
+        0: load_const W_Int(4)
+        1: store_local_green A
+        2: load_local_green A
+        3: return
+        4: load_const w_None
+        5: return
+        """)
+        assert w_func.call() == W_Int(4)
 
     def test_func_params(self):
         w_func = toy_compile("""
