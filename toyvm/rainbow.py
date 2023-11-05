@@ -28,7 +28,7 @@ class RainbowInterpreter:
         self.pcmap = {} # maps code PCs to out PCs
 
     def emit(self, op):
-        self.pcmap[self.pc] = self.pc_out()
+        #self.pcmap[self.pc] = self.pc_out()
         self.out.emit(op)
 
     def print_pcmap(self):
@@ -73,6 +73,7 @@ class RainbowInterpreter:
 
     def flush(self):
         for w_value in self.greenframe.stack:
+            self.pcmap[self.pc] = self.pc_out()
             self.emit(OpCode('load_const', w_value))
             self.stack_length += 1
         self.greenframe.stack = []
@@ -86,6 +87,8 @@ class RainbowInterpreter:
     def op_default(self, op, *args):
         if self.is_green(op):
             self.greenframe.run_op(op)
+            # op will not be present in out: it's pc corresponds to the pc of
+            # the NEXT non-green op which will be emitted
             self.pcmap[self.pc] = self.pc_out()
         else:
             self.flush()
@@ -93,6 +96,7 @@ class RainbowInterpreter:
             assert self.stack_length >= pops # sanity check
             self.stack_length -= pops
             self.stack_length += op.num_pushes()
+            self.pcmap[self.pc] = self.pc_out()
             self.emit(op)
 
     def op_br_if(self, op, then_pc, else_pc, endif_pc):
