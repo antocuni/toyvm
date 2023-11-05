@@ -8,6 +8,7 @@ class TestRainbow:
     def peval(self, code):
         self.interp = RainbowInterpreter(code)
         self.interp.run()
+        self.interp.print_pcmap()
         return self.interp.out
 
     def test_simple(self):

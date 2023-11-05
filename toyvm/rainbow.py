@@ -12,7 +12,6 @@ def peval(code):
     """
     interp = RainbowInterpreter(code)
     interp.run()
-    #interp.print_pcmap()
     return interp.out
 
 
@@ -28,7 +27,6 @@ class RainbowInterpreter:
         self.pcmap = {} # maps code PCs to out PCs
 
     def emit(self, op):
-        #self.pcmap[self.pc] = self.pc_out()
         self.out.emit(op)
 
     def print_pcmap(self):
@@ -46,9 +44,18 @@ class RainbowInterpreter:
         for pc, op in enumerate(self.code.body):
             if pc in self.pc_to_skips:
                 continue
-            self.pc = pc
             meth = getattr(self, f'op_{op.name}', self.op_default)
-            meth(op, *op.args)
+            is_green = meth(op, *op.args)
+            assert type(is_green) is bool
+            pc_out = len(self.out.body)
+            if is_green:
+                # op was optimized away, so it's not present in outcode. It's
+                # pc corresponds to the pc of the NEXT non-green op which will
+                # be emitted
+                self.pcmap[pc] = pc_out
+            else:
+                # op emitted to outcode, just use its PC.
+                self.pcmap[pc] = pc_out - 1
         self.fix_pcs()
 
     def fix_pcs(self):
@@ -68,12 +75,8 @@ class RainbowInterpreter:
     def n_greens(self):
         return len(self.greenframe.stack)
 
-    def pc_out(self):
-        return len(self.out.body)
-
     def flush(self):
         for w_value in self.greenframe.stack:
-            self.pcmap[self.pc] = self.pc_out()
             self.emit(OpCode('load_const', w_value))
             self.stack_length += 1
         self.greenframe.stack = []
@@ -87,17 +90,15 @@ class RainbowInterpreter:
     def op_default(self, op, *args):
         if self.is_green(op):
             self.greenframe.run_op(op)
-            # op will not be present in out: it's pc corresponds to the pc of
-            # the NEXT non-green op which will be emitted
-            self.pcmap[self.pc] = self.pc_out()
+            return True
         else:
             self.flush()
             pops = op.num_pops()
             assert self.stack_length >= pops # sanity check
             self.stack_length -= pops
             self.stack_length += op.num_pushes()
-            self.pcmap[self.pc] = self.pc_out()
             self.emit(op)
+            return False
 
     def op_br_if(self, op, then_pc, else_pc, endif_pc):
         if self.n_greens() >= 1:
@@ -109,6 +110,7 @@ class RainbowInterpreter:
             else:
                 # skip the "then" branch
                 self.pc_to_skips.update(range(then_pc, else_pc))
+            return True
         else:
             # red case
-            self.op_default(op, *op.args)
+            return self.op_default(op, *op.args)
