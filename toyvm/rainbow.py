@@ -50,7 +50,14 @@ class RainbowInterpreter:
         for pc, op in enumerate(self.code.body):
             if self.should_skip(pc):
                 continue
-            meth = getattr(self, f'op_{op.name}', self.op_default)
+            # find the appropriate op_* method
+            meth = getattr(self, f'op_{op.name}', None)
+            if meth is None:
+                if self.is_green(op):
+                    meth = self.op_default_green
+                else:
+                    meth = self.op_default_red
+            #
             is_green = meth(op, *op.args)
             assert type(is_green) is bool
             pc_out = len(self.out.body)
@@ -93,18 +100,18 @@ class RainbowInterpreter:
         pops = op.num_pops()
         return self.n_greens() >= pops
 
-    def op_default(self, op, *args):
-        if self.is_green(op):
-            self.greenframe.run_op(op)
-            return True
-        else:
-            self.flush()
-            pops = op.num_pops()
-            assert self.stack_length >= pops # sanity check
-            self.stack_length -= pops
-            self.stack_length += op.num_pushes()
-            self.emit(op)
-            return False
+    def op_default_green(self, op, *args):
+        self.greenframe.run_op(op)
+        return True
+
+    def op_default_red(self, op, *args):
+        self.flush()
+        pops = op.num_pops()
+        assert self.stack_length >= pops # sanity check
+        self.stack_length -= pops
+        self.stack_length += op.num_pushes()
+        self.emit(op)
+        return False
 
     def op_br_if(self, op, then_pc, else_pc, endif_pc):
         if self.n_greens() >= 1:
@@ -116,5 +123,4 @@ class RainbowInterpreter:
                 self.skip_pcs(then_pc, else_pc)  # skip the "then" branch
             return True
         else:
-            # red case
-            return self.op_default(op, *op.args)
+            return self.op_default_red(op, *op.args)
