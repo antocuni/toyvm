@@ -113,6 +113,13 @@ class RainbowInterpreter:
         self.emit(op)
         return False
 
+    def op_load_local_green(self, op, varname):
+        return self.op_default_green(op, varname)
+
+    def op_store_local_green(self, op, varname):
+        assert self.n_greens() >= 1, 'store_local_green called on a red'
+        return self.op_default_green(op, varname)
+
     def op_br_if(self, op, then_pc, else_pc, endif_pc):
         if self.n_greens() >= 1:
             # green case

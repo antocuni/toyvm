@@ -82,6 +82,9 @@ class Frame:
     def op_load_local(self, name):
         self.push(self.locals[name])
 
+    op_store_local_green = op_store_local
+    op_load_local_green = op_load_local
+
     def op_br(self, pc):
         self.pc = pc - 1
 

@@ -6,6 +6,8 @@ STACK_EFFECT = {
     'load_const': (0, 1),
     'load_local': (0, 1),
     'store_local': (1, 0),
+    'load_local_green': (0, 1),
+    'store_local_green': (1, 0),
     'return': (1, 0),
     'abort': (0, 0),
     'add': (2, 1),

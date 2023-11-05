@@ -1,3 +1,4 @@
+import pytest
 from toyvm.rainbow import RainbowInterpreter
 from toyvm.opcode import OpCode, CodeObject
 from toyvm.objects import W_Int, W_Str, W_Function
@@ -183,3 +184,25 @@ class TestRainbow:
         assert w_f1.call(W_Int(1)) == W_Int(5)
         assert w_f2.call(W_Int(0)) == W_Int(6)
         assert w_f2.call(W_Int(1)) == W_Int(5)
+
+    def test_green_locals(self):
+        code = CodeObject('fn', [
+            OpCode('load_const', W_Int(42)),
+            OpCode('store_local_green', 'A'),
+            OpCode('load_local_green', 'A'),
+            OpCode('return'),
+        ])
+        code2 = self.peval(code)
+        assert code2.body == [
+            OpCode('load_const', W_Int(42)),
+            OpCode('return'),
+        ]
+
+    def test_green_locals_sanity_check(self):
+        code = CodeObject('fn', [
+            OpCode('load_local', 'a'),
+            OpCode('store_local_green', 'B'),
+        ])
+        with pytest.raises(AssertionError,
+                           match='store_local_green called on a red'):
+            self.peval(code)
