@@ -134,7 +134,7 @@ class Frame:
         else:
             self.locals[targetname] = w_value
 
-    def op_mark_unroll(self):
+    def op_unroll(self):
         w_value = self.pop()
-        w_value.mark_unroll()
-        self.push(w_value)
+        w_res = w_value.unroll()
+        self.push(w_res)

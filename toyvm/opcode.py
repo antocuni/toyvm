@@ -18,7 +18,7 @@ STACK_EFFECT = {
     'pop': (1, 0),
     'get_iter': (1, 0),
     'for_iter': (0, 0),
-    'mark_unroll': (1, 1),
+    'unroll': (1, 1),
 }
 
 PURE_OPS = set([

@@ -148,6 +148,6 @@ class FuncDefCompiler:
             self.emit('print', len(expr.args))
         elif funcname == 'UNROLL':
             assert len(expr.args) == 1
-            self.emit('mark_unroll')
+            self.emit('unroll')
         else:
             assert False, f'unsupported function: {funcname}'
