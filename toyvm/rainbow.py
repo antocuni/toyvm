@@ -23,7 +23,6 @@ class RainbowInterpreter:
         self.out = CodeObject(code.name + '<peval>', [])
         self.stack_length = 0
         self.greenframe = Frame(code)
-        self.pc_to_skips = set()
         self.pcmap = {} # maps code PCs to out PCs
 
     def emit(self, op):
@@ -40,9 +39,16 @@ class RainbowInterpreter:
         for a, b in self.pcmap.items():
             print(f'{a} -> {b}')
 
+    def skip_pcs(self, start, end):
+        for pc in range(start, end):
+            self.pcmap[pc] = 'SKIP'
+
+    def should_skip(self, pc):
+        return self.pcmap.get(pc) == 'SKIP'
+
     def run(self):
         for pc, op in enumerate(self.code.body):
-            if pc in self.pc_to_skips:
+            if self.should_skip(pc):
                 continue
             meth = getattr(self, f'op_{op.name}', self.op_default)
             is_green = meth(op, *op.args)
@@ -105,11 +111,9 @@ class RainbowInterpreter:
             # green case
             w_cond = self.greenframe.stack.pop()
             if w_cond.value:
-                # skip the "else" branch
-                self.pc_to_skips.update(range(else_pc, endif_pc))
+                self.skip_pcs(else_pc, endif_pc) # skip the "else" branch
             else:
-                # skip the "then" branch
-                self.pc_to_skips.update(range(then_pc, else_pc))
+                self.skip_pcs(then_pc, else_pc)  # skip the "then" branch
             return True
         else:
             # red case
