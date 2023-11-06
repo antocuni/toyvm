@@ -214,12 +214,12 @@ class TestCompiler:
 
     def test_for_unroll(self):
         w_func = self.compile("""
-        def foo(tup):
+        def foo():
+            TUP = (1, 2, 3)
             a = 0
-            for X in UNROLL(tup):
+            for X in UNROLL(TUP):
                 a = a + X
             return a
         """)
-        w_tup = W_Tuple([W_Int(1), W_Int(2), W_Int(3)])
-        w_res = w_func.call(w_tup)
+        w_res = w_func.call()
         assert w_res == W_Int(6)

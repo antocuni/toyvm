@@ -149,6 +149,10 @@ class RainbowInterpreter:
         else:
             return self.op_green(pc, op, itername)
 
+    def op_unroll(self, pc, op):
+        assert self.n_greens() >= 1, 'UNROLL() called on a red variable'
+        return self.op_green(pc, op)
+
     def op_for_iter(self, pc, op, itername, targetname, endfor_pc):
         w_iter = self.greenframe.locals.get(itername)
         if w_iter is None:
