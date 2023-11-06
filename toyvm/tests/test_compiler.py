@@ -182,8 +182,8 @@ class TestCompiler:
         w_func = toy_compile("""
         def foo(tup):
             a = 0
-            for x in UNROLL(tup):
-                a = a + x
+            for X in UNROLL(tup):
+                a = a + X
             return a
         """)
         w_tup = W_Tuple([W_Int(1), W_Int(2), W_Int(3)])

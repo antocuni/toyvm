@@ -28,7 +28,7 @@ PURE_OPS = set([
     'add',
     'mul',
     'make_tuple',
-    'mark_unroll',
+    'unroll',
 ])
 
 @dataclass

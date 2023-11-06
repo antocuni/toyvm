@@ -1,7 +1,7 @@
 import pytest
 from toyvm.rainbow import RainbowInterpreter
 from toyvm.opcode import OpCode, CodeObject
-from toyvm.objects import W_Int, W_Str, W_Function
+from toyvm.objects import W_Int, W_Str, W_Function, W_Tuple, w_None
 from toyvm.compiler import toy_compile
 
 class TestRainbow:
@@ -206,3 +206,24 @@ class TestRainbow:
         with pytest.raises(AssertionError,
                            match='store_local_green called on a red'):
             self.peval(code)
+
+    @pytest.mark.skip('WIP')
+    def test_unroll(self):
+        w_tup = W_Tuple([W_Int(10), W_Int(20)])
+        code = CodeObject('fn', [
+            OpCode('load_const', W_Int(0)),
+            OpCode('store_local', 'a'),
+            OpCode('load_const', w_tup),
+            OpCode('unroll'),
+            OpCode('get_iter', '@iter0'),
+            OpCode('for_iter', '@iter0', 'X', 11),
+            OpCode('load_local', 'a'),
+            OpCode('load_local_green', 'X'),
+            OpCode('add'),
+            OpCode('store_local', 'a'),
+            OpCode('br', 5),
+            OpCode('load_local', 'a'),
+            OpCode('return'),
+        ])
+        code2 = self.peval(code)
+        import pdb;pdb.set_trace()

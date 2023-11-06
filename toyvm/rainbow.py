@@ -47,29 +47,35 @@ class RainbowInterpreter:
         return self.pcmap.get(pc) == 'SKIP'
 
     def run(self):
-        for pc, op in enumerate(self.code.body):
-            if self.should_skip(pc):
-                continue
-            # find the appropriate op_* method
-            meth = getattr(self, f'op_{op.name}', None)
-            if meth is None:
-                if self.is_green(op):
-                    meth = self.op_default_green
-                else:
-                    meth = self.op_default_red
-            #
-            is_green = meth(op, *op.args)
-            assert type(is_green) is bool
-            pc_out = len(self.out.body)
-            if is_green:
-                # op was optimized away, so it's not present in outcode. It's
-                # pc corresponds to the pc of the NEXT non-green op which will
-                # be emitted
-                self.pcmap[pc] = pc_out
-            else:
-                # op emitted to outcode, just use its PC.
-                self.pcmap[pc] = pc_out - 1
+        for pc in range(len(self.code.body)):
+            self.run_single_op(pc)
         self.fix_pcs()
+
+    def run_single_op(self, pc):
+        if self.should_skip(pc):
+            return
+        #
+        op = self.code.body[pc]
+        # find the appropriate op_* method
+        meth = getattr(self, f'op_{op.name}', None)
+        if meth is None:
+            if self.is_green(op):
+                meth = self.op_default_green
+            else:
+                meth = self.op_default_red
+        #
+        is_green = meth(op, *op.args)
+        assert type(is_green) is bool
+        pc_out = len(self.out.body)
+        if is_green:
+            # op was optimized away, so it's not present in outcode. It's
+            # pc corresponds to the pc of the NEXT non-green op which will
+            # be emitted
+            self.pcmap[pc] = pc_out
+        else:
+            # op emitted to outcode, just use its PC.
+            self.pcmap[pc] = pc_out - 1
+
 
     def fix_pcs(self):
         for i, op in enumerate(self.out.body):
@@ -131,3 +137,35 @@ class RainbowInterpreter:
             return True
         else:
             return self.op_default_red(op, *op.args)
+
+    def op_get_iter(self, op, itername):
+        is_red = self.n_greens() < 1 or not self.greenframe.stack[-1].unroll
+        if is_red:
+            return self.op_default_red(op, itername)
+        else:
+            return self.op_default_green(op, itername)
+
+    def op_for_iter(self, op, itername, targetname, endfor_pc):
+        w_iter = self.greenframe.locals.get(itername)
+        if w_iter is None:
+            # this is a non-unrolling for
+            # XXX implement me
+            import pdb;pdb.set_trace()
+        else:
+            return self.op_unroll_for_iter(op, itername, targetname, endfor_pc,
+                                           w_iter)
+
+    def op_unroll_for_iter(self, op, itername, targetname, endfor_pc, w_iter):
+        assert w_iter.unroll
+        PC = 5 # XXX
+        br_op = self.code.body[endfor_pc - 1]
+        assert br_op.name == 'br' # this is the op which loops back
+        self.skip_pcs(endfor_pc-1, endfor_pc)
+
+        assert targetname.isupper()
+        for w_item in w_iter._iter:
+            self.greenframe.locals[targetname] = w_item
+            for pc in range(PC+1, endfor_pc-1):
+                self.run_single_op(pc)
+
+        return False # ???
