@@ -29,7 +29,7 @@ class RainbowInterpreter:
     def out_pc(self):
         return len(self.out.body)
 
-    def record_pcmap(self, in_pc):
+    def record_jump_target(self, in_pc):
         self.pcmap[in_pc] = self.out_pc
 
     def emit(self, op):
@@ -72,7 +72,8 @@ class RainbowInterpreter:
 
         for i, op in enumerate(self.out.body):
             if op.name == 'br':
-                import pdb;pdb.set_trace()
+                pc_target, = tr(*op.args)
+                op.replace_args(pc_target)
             elif op.name == 'br_if':
                 then_pc, else_pc, endif_pc = tr(*op.args)
                 op.replace_args(then_pc, else_pc, endif_pc)
@@ -129,13 +130,13 @@ class RainbowInterpreter:
             return endif_pc
         else:
             self.op_red(op, *op.args) # emit br_if
-            self.record_pcmap(then_pc)
+            self.record_jump_target(then_pc)
             #
             self.run_range(then_pc, else_pc)
-            self.record_pcmap(else_pc)
+            self.record_jump_target(else_pc)
             #
             self.run_range(else_pc, endif_pc)
-            self.record_pcmap(endif_pc)
+            self.record_jump_target(endif_pc)
             #
             return endif_pc
 

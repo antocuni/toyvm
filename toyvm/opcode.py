@@ -97,5 +97,9 @@ class CodeObject:
         dumped = textwrap.dedent(self.dump())
         expected = textwrap.dedent(expected).strip('\n')
         if dumped != expected:
-            import pdb;pdb.set_trace()
+            print('got')
+            print(dumped)
+            print()
+            print('expected')
+            print(expected)
         return dumped == expected

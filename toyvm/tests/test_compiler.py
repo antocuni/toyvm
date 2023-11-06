@@ -1,15 +1,33 @@
+import pytest
 from toyvm.compiler import toy_compile
-from toyvm.objects import W_Int, W_Tuple, w_None
+from toyvm.rainbow import peval
+from toyvm.objects import W_Int, W_Tuple, w_None, W_Function
 
 class TestCompiler:
 
+    @pytest.fixture(autouse=True, params=['interp', 'rainbow'])
+    def compilation_mode(self, request):
+        self.mode = request.param
+
+    def compile(self, src):
+        self.w_func = toy_compile(src)
+        if self.mode == 'rainbow':
+            code2 = peval(self.w_func.code)
+            self.w_func2 = W_Function(
+                self.w_func.name,
+                self.w_func.argnames,
+                code2)
+            return self.w_func2
+        else:
+            return self.w_func
+
     def test_simple(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo():
             return 42
         """)
         assert w_func.name == 'foo'
-        assert w_func.code.name == 'foo'
+        assert w_func.code.name in ('foo', 'foo<peval>')
         assert w_func.code.equals("""
         0: load_const W_Int(42)
         1: return
@@ -19,24 +37,32 @@ class TestCompiler:
         assert w_func.call() == W_Int(42)
 
     def test_add_mul(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo():
             return 1 + 2 * 3
         """)
-        assert w_func.code.equals("""
-        0: load_const W_Int(1)
-        1: load_const W_Int(2)
-        2: load_const W_Int(3)
-        3: mul
-        4: add
-        5: return
-        6: load_const w_None
-        7: return
-        """)
+        if self.mode == 'interp':
+            assert w_func.code.equals("""
+            0: load_const W_Int(1)
+            1: load_const W_Int(2)
+            2: load_const W_Int(3)
+            3: mul
+            4: add
+            5: return
+            6: load_const w_None
+            7: return
+            """)
+        else:
+            assert w_func.code.equals("""
+            0: load_const W_Int(7)
+            1: return
+            2: load_const w_None
+            3: return
+            """)
         assert w_func.call() == W_Int(7)
 
     def test_locals(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo():
             a = 4
             return a
@@ -52,23 +78,31 @@ class TestCompiler:
         assert w_func.call() == W_Int(4)
 
     def test_locals_green(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo():
             A = 4
             return A
         """)
-        assert w_func.code.equals("""
-        0: load_const W_Int(4)
-        1: store_local_green A
-        2: load_local_green A
-        3: return
-        4: load_const w_None
-        5: return
-        """)
+        if self.mode == 'interp':
+            assert w_func.code.equals("""
+            0: load_const W_Int(4)
+            1: store_local_green A
+            2: load_local_green A
+            3: return
+            4: load_const w_None
+            5: return
+            """)
+        else:
+            assert w_func.code.equals("""
+            0: load_const W_Int(4)
+            1: return
+            2: load_const w_None
+            3: return
+            """)
         assert w_func.call() == W_Int(4)
 
     def test_func_params(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo(a, b):
             return a + b
         """)
@@ -83,7 +117,7 @@ class TestCompiler:
         assert w_func.call(W_Int(10), W_Int(20)) == W_Int(30)
 
     def test_if_then(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo(a):
             if a:
                 a = 42
@@ -105,7 +139,7 @@ class TestCompiler:
 
 
     def test_if_else(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo(a):
             if a:
                 b = 10
@@ -131,7 +165,7 @@ class TestCompiler:
 
 
     def test_tuple(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo():
             return (1, 2, 3)
         """)
@@ -140,7 +174,7 @@ class TestCompiler:
 
 
     def test_None(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo():
             pass
         """)
@@ -148,7 +182,7 @@ class TestCompiler:
         assert w_res is w_None
 
     def test_print(self, capsys):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo():
             print('hello', 42)
         """)
@@ -157,7 +191,7 @@ class TestCompiler:
         assert out == 'hello 42\n'
 
     def test_for(self, capsys):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo(tup):
             for x in tup:
                 print(x)
@@ -179,7 +213,7 @@ class TestCompiler:
         assert out == '1\n2\n3\n'
 
     def test_for_unroll(self):
-        w_func = toy_compile("""
+        w_func = self.compile("""
         def foo(tup):
             a = 0
             for X in UNROLL(tup):
