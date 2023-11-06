@@ -142,9 +142,9 @@ class RainbowInterpreter:
     def op_get_iter(self, op, itername):
         is_red = self.n_greens() < 1 or not self.greenframe.stack[-1].unroll
         if is_red:
-            return self.op_default_red(op, itername)
+            return self.op_red(op, itername)
         else:
-            return self.op_default_green(op, itername)
+            return self.op_green(op, itername)
 
     def op_for_iter(self, op, itername, targetname, endfor_pc):
         w_iter = self.greenframe.locals.get(itername)
@@ -158,15 +158,14 @@ class RainbowInterpreter:
 
     def op_unroll_for_iter(self, op, itername, targetname, endfor_pc, w_iter):
         assert w_iter.unroll
-        PC = 5 # XXX
-        br_op = self.code.body[endfor_pc - 1]
-        assert br_op.name == 'br' # this is the op which loops back
-        self.skip_pcs(endfor_pc-1, endfor_pc)
-
         assert targetname.isupper()
+        PC = 5 # XXX this is hardcoded
+        #
+        br_pc = endfor_pc - 1
+        assert self.code.body[br_pc].name == 'br' # op to loop back
+        #
         for w_item in w_iter._iter:
             self.greenframe.locals[targetname] = w_item
-            for pc in range(PC+1, endfor_pc-1):
-                self.run_single_op(pc)
+            self.run_range(PC+1, br_pc)
 
-        return False # ???
+        return endfor_pc

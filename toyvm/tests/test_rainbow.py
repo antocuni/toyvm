@@ -145,9 +145,8 @@ class TestRainbow:
                            match='store_local_green called on a red'):
             self.peval(code)
 
-    @pytest.mark.skip('WIP')
     def test_unroll(self):
-        w_tup = W_Tuple([W_Int(10), W_Int(20)])
+        w_tup = W_Tuple([W_Int(2), W_Int(3)])
         code = CodeObject('fn', [
             OpCode('load_const', W_Int(0)),
             OpCode('store_local', 'a'),
@@ -164,4 +163,22 @@ class TestRainbow:
             OpCode('return'),
         ])
         code2 = self.peval(code)
-        import pdb;pdb.set_trace()
+        assert code2.body == [
+            OpCode('load_const', W_Int(0)),
+            OpCode('store_local', 'a'),
+
+            # unrolled iteration 1
+            OpCode('load_local', 'a'),
+            OpCode('load_const', W_Int(2)),
+            OpCode('add'),
+            OpCode('store_local', 'a'),
+
+            # unrolled iteration 2
+            OpCode('load_local', 'a'),
+            OpCode('load_const', W_Int(3)),
+            OpCode('add'),
+            OpCode('store_local', 'a'),
+
+            OpCode('load_local', 'a'),
+            OpCode('return')
+        ]
