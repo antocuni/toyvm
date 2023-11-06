@@ -78,7 +78,9 @@ class RainbowInterpreter:
                 then_pc, else_pc, endif_pc = tr(*op.args)
                 op.replace_args(then_pc, else_pc, endif_pc)
             elif op.name == 'for_iter':
-                import pdb;pdb.set_trace()
+                itername, targetname, endfor_pc = op.args
+                endfor_pc, = tr(endfor_pc)
+                op.replace_args(itername, targetname, endfor_pc)
 
     def n_greens(self):
         return len(self.greenframe.stack)
@@ -151,7 +153,11 @@ class RainbowInterpreter:
         w_iter = self.greenframe.locals.get(itername)
         if w_iter is None:
             # this is a non-unrolling for
-            import pdb;pdb.set_trace()
+            self.record_jump_target(pc)
+            self.op_red(pc, op, *op.args)
+            self.run_range(pc+1, endfor_pc)
+            self.record_jump_target(endfor_pc)
+            return endfor_pc
         else:
             return self.op_unroll_for_iter(pc, op, itername, targetname,
                                            endfor_pc, w_iter)
