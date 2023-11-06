@@ -51,8 +51,15 @@ class OpCode:
         parts = [self.name] + list(map(str, self.args))
         return ' '.join(parts)
 
+    def copy(self):
+        return OpCode(self.name, *self.args)
+
     def is_pure(self):
         return self.name in PURE_OPS
+
+    def replace_args(self, *args):
+        assert len(args) == len(self.args)
+        self.args = args
 
     def num_pops(self):
         pops = STACK_EFFECT[self.name][0]

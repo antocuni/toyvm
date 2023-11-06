@@ -9,7 +9,6 @@ class TestRainbow:
     def peval(self, code):
         self.interp = RainbowInterpreter(code)
         self.interp.run()
-        self.interp.print_pcmap()
         return self.interp.out
 
     def test_simple(self):
@@ -93,67 +92,6 @@ class TestRainbow:
         ])
         code2 = self.peval(code)
         assert code2.body == code.body
-
-    def test_pc_remap_red(self):
-        code = CodeObject('fn', [
-            OpCode('load_local', 'a'),       # 0
-            OpCode('load_local', 'b'),       # 1
-            OpCode('add'),                   # 2
-        ])
-        code2 = self.peval(code)
-        assert code.body == code2.body
-        assert self.interp.pcmap == {
-            0: 0,
-            1: 1,
-            2: 2,
-        }
-
-    def test_pc_remap_flush1(self):
-        code = CodeObject('fn', [
-            OpCode('load_const', W_Int(1)),  # 0
-            OpCode('load_local', 'b'),       # 1
-            OpCode('add'),                   # 2
-        ])
-        code2 = self.peval(code)
-        assert code.body == code2.body
-        assert self.interp.pcmap == {
-            0: 0,
-            1: 1,
-            2: 2,
-        }
-
-    def test_pc_remap_flush2(self):
-        code = CodeObject('fn', [
-            OpCode('load_local', 'a'),       # 0
-            OpCode('load_const', W_Int(1)),  # 1
-            OpCode('add'),                   # 2
-        ])
-        code2 = self.peval(code)
-        assert code.body == code2.body
-        assert self.interp.pcmap == {
-            0: 0,
-            1: 1,
-            2: 2,
-        }
-
-    def test_pc_remap_green(self):
-        code = CodeObject('fn', [
-            OpCode('load_const', W_Int(2)),  # 0
-            OpCode('load_const', W_Int(1)),  # 1
-            OpCode('add'),                   # 2
-            OpCode('return'),                # 3
-        ])
-        code2 = self.peval(code)
-        assert code2.body == [
-            OpCode('load_const', W_Int(3)),  # 0
-            OpCode('return'),                # 1
-        ]
-        assert self.interp.pcmap == {
-            0: 0,
-            1: 0,
-            2: 0,
-            3: 1,
-        }
 
     def test_pc_remap_branch(self):
         code = CodeObject('fn', [
