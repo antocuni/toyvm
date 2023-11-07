@@ -137,7 +137,6 @@ class TestCompiler:
         assert w_func.call(W_Int(0)) == W_Int(0)
         assert w_func.call(W_Int(1)) == W_Int(42)
 
-
     def test_if_else(self):
         w_func = self.compile("""
         def foo(a):
@@ -163,7 +162,6 @@ class TestCompiler:
         assert w_func.call(W_Int(0)) == W_Int(20)
         assert w_func.call(W_Int(1)) == W_Int(10)
 
-
     def test_tuple(self):
         w_func = self.compile("""
         def foo():
@@ -172,6 +170,13 @@ class TestCompiler:
         w_res = w_func.call()
         assert w_res == W_Tuple([W_Int(1), W_Int(2), W_Int(3)])
 
+    def test_compare(self):
+        w_func = self.compile("""
+        def foo(a, b):
+            return a < b
+        """)
+        w_res = w_func.call(W_Int(2), W_Int(3))
+        assert w_res.value
 
     def test_None(self):
         w_func = self.compile("""
@@ -223,3 +228,17 @@ class TestCompiler:
         """)
         w_res = w_func.call()
         assert w_res == W_Int(6)
+
+    @pytest.mark.skip("WIP")
+    def test_red_if_inside_for_unroll(self):
+        w_func = self.compile("""
+        def foo():
+            TUP = (5, 7, 1000)
+            a = 0
+            for X in UNROLL(TUP):
+                if a < 10:
+                    a = a + X
+            return a
+        """)
+        w_res = w_func.call()
+        assert w_res == W_Int(12)

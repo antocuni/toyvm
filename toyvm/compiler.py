@@ -135,6 +135,14 @@ class FuncDefCompiler:
         else:
             self.unknown(expr.op)
 
+    def expr_Compare(self, expr):
+        assert len(expr.ops) == 1
+        assert len(expr.comparators) == 1
+        self.compile_expr(expr.left)
+        self.compile_expr(expr.comparators[0])
+        op = expr.ops[0].__class__.__name__
+        self.emit(op.lower()) # e.g. 'lt'
+
     def expr_Name(self, expr):
         name = expr.id
         if name.isupper():

@@ -1,3 +1,4 @@
+import operator
 from toyvm.objects import W_Object, W_Int, W_Str, W_Tuple, w_None
 
 class Frame:
@@ -68,10 +69,17 @@ class Frame:
         self.push(w_c)
 
     def op_gt(self):
+        self._op_compare(operator.gt)
+
+    def op_lt(self):
+        self._op_compare(operator.lt)
+
+    def _op_compare(self, cmpfunc):
         w_b = self.pop()
         w_a = self.pop()
         if w_a.type == w_b.type:
-            w_c = W_Int(int(w_a.value > w_b.value))
+            c = cmpfunc(w_a.value, w_b.value)
+            w_c = W_Int(c)
         else:
             assert False
         self.push(w_c)
