@@ -118,13 +118,11 @@ class RainbowInterpreter:
         return self.op_green(pc, op)
 
     def op_for_iter(self, pc, op, itername, targetname, endfor):
+        pc_endfor = self.get_pc(endfor)
         w_iter = self.greenframe.locals.get(itername)
         if w_iter is None:
-            # this is a non-unrolling for
-            self.record_jump_target(pc)
             self.op_red(pc, op, *op.args)
             self.run_range(pc+1, pc_endfor)
-            self.record_jump_target(pc_endfor)
             return pc_endfor
         else:
             return self.op_unroll_for_iter(pc, op, itername, targetname,

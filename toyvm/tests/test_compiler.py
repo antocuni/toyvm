@@ -3,11 +3,11 @@ from toyvm.compiler import toy_compile
 from toyvm.rainbow import peval
 from toyvm.objects import W_Int, W_Tuple, w_None, W_Function
 
+COMPILATION_MODES = ['interp', 'rainbow']
+
 class TestCompiler:
 
-    @pytest.fixture(autouse=True, params=['interp',
-                                          #'rainbow'
-                                          ])
+    @pytest.fixture(autouse=True, params=COMPILATION_MODES)
     def compilation_mode(self, request):
         self.mode = request.param
 
