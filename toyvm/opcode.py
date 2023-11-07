@@ -14,6 +14,7 @@ STACK_EFFECT = {
     'mul': (2, 1),
     'lt': (2, 1),
     'gt': (2, 1),
+    'label': (0, 0),
     'br_if': (1, 0),
     'br': (0, 0),
     'make_tuple': ('ARG', 1), # special, num_pops depends on the arg
@@ -43,10 +44,7 @@ class OpCode:
         self.args = args
 
     def __repr__(self):
-        if self.args:
-            return f'<OpCode {self.name} {list(self.args)}>'
-        else:
-            return f'<OpCode {self.name}>'
+        return f'<OpCode "{self.str()}">'
 
     def str(self):
         parts = [self.name] + list(map(str, self.args))
@@ -87,8 +85,12 @@ class CodeObject:
 
     def dump(self):
         lines = []
-        for pc, op in enumerate(self.body):
-            lines.append(f'{pc:2d}: {op.str()}')
+        for op in self.body:
+            if op.name == 'label':
+                l = op.args[0]
+                lines.append(f'{l}:')
+            else:
+                lines.append(f'  {op.str()}')
         return '\n'.join(lines)
 
     def pp(self):

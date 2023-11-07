@@ -1,5 +1,6 @@
 import ast
 import textwrap
+from collections import Counter
 from toyvm.opcode import CodeObject, OpCode
 from toyvm.objects import W_Int, W_Str, W_Function, w_None
 
@@ -27,6 +28,17 @@ class FuncDefCompiler:
         # argument passing features of python, and we just ignore *args and
         # **kwargs
         self.code = CodeObject(funcdef.name, [])
+        self.label_counter = 0
+
+    def new_label(self, stem):
+        n = self.label_counter
+        self.label_counter += 1
+        return f'{stem}{n}'
+
+    def new_labels(self, *stems):
+        n = self.label_counter
+        self.label_counter += 1
+        return [f'{stem}{n}' for stem in stems]
 
     def emit(self, opname, *args):
         op = OpCode(opname, *args)
@@ -80,16 +92,29 @@ class FuncDefCompiler:
             self.emit('store_local', name)
 
     def stmt_If(self, stmt):
+        if stmt.orelse:
+            self._stmt_If_then_else(stmt)
+        else:
+            self._stmt_If_then(stmt)
+
+    def _stmt_If_then(self, stmt):
+        then, endif = self.new_labels('then', 'endif')
         self.compile_expr(stmt.test)
-        br_if = self.emit('br_if', None, None, None)
-        then_pc = self.pc()
+        br_if = self.emit('br_if', then, endif, endif)
+        self.emit('label', then)
         self.compile_many_stmts(stmt.body)
-        br = self.emit('br', None)
-        else_pc = self.pc()
+        self.emit('label', endif)
+
+    def _stmt_If_then_else(self, stmt):
+        then, else_, endif = self.new_labels('then', 'else', 'endif')
+        self.compile_expr(stmt.test)
+        br_if = self.emit('br_if', then, else_, endif)
+        self.emit('label', then)
+        self.compile_many_stmts(stmt.body)
+        br = self.emit('br', endif)
+        self.emit('label', else_)
         self.compile_many_stmts(stmt.orelse)
-        endif_pc = self.pc()
-        br_if.args = (then_pc, else_pc, endif_pc)
-        br.args = (endif_pc, )
+        self.emit('label', endif)
 
     def stmt_Expr(self, stmt):
         self.compile_expr(stmt.value)

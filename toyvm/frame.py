@@ -8,6 +8,13 @@ class Frame:
         self.locals = {}
         self.pc = 0
         self.stack = []
+        self.labels = {} # name -> pc
+        self.init_labels()
+
+    def init_labels(self):
+        for pc, op in enumerate(self.code.body):
+            if op.name == 'label':
+                self.labels[op.args[0]] = pc
 
     def push(self, w_value):
         assert isinstance(w_value, W_Object)
@@ -42,6 +49,10 @@ class Frame:
         if meth is None:
             raise NotImplementedError(meth_name)
         meth(*op.args)
+
+    def jump(self, label):
+        assert isinstance(label, str)
+        self.pc = self.labels[label]
 
     def op_load_const(self, w_value):
         self.push(w_value)
@@ -93,10 +104,13 @@ class Frame:
     op_store_local_green = op_store_local
     op_load_local_green = op_load_local
 
-    def op_br(self, pc):
-        self.pc = pc - 1
+    def op_label(self, l):
+        assert self.labels[l] == self.pc
 
-    def op_br_if(self, then_pc, else_pc, endif_pc):
+    def op_br(self, label):
+        self.jump(label)
+
+    def op_br_if(self, then, else_, endif):
         """
         branch if
 
@@ -106,13 +120,12 @@ class Frame:
         to do static analysis on the bytecode (e.g. by the rainbow
         interpreter).
         """
-        assert endif_pc >= else_pc
         w_cond = self.pop()
         assert w_cond.type == "int"
         if w_cond.value:
-            self.pc = then_pc - 1
+            self.jump(then)
         else:
-            self.pc = else_pc - 1
+            self.jump(else_)
 
     def op_abort(self, msg):
         raise Exception(f"ABORT: {msg}")

@@ -123,16 +123,21 @@ class TestCompiler:
                 a = 42
             return a
         """)
+        print()
+        w_func.code.pp()
+        import pdb;pdb.set_trace()
         assert w_func.code.equals("""
-        0: load_local a
-        1: br_if 2 5 5
-        2: load_const W_Int(42)
-        3: store_local a
-        4: br 5
-        5: load_local a
-        6: return
-        7: load_const w_None
-        8: return
+         0: load_local a
+         1: br_if then_0 else_0 endif_0
+         2: label then_0
+         3: load_const W_Int(42)
+         4: store_local a
+         5: label else_0
+         6: label endif_0
+         7: load_local a
+         8: return
+         9: load_const w_None
+        10: return
         """)
         assert w_func.call(W_Int(0)) == W_Int(0)
         assert w_func.call(W_Int(1)) == W_Int(42)
@@ -148,10 +153,12 @@ class TestCompiler:
         """)
         assert w_func.code.equals("""\n
          0: load_local a
-         1: br_if 2 5 7
+         1: br_if then_0 else_0 endif_0
+         2: label then_0
          2: load_const W_Int(10)
          3: store_local b
-         4: br 7
+         4: br endif_0
+         0: label else_0
          5: load_const W_Int(20)
          6: store_local b
          7: load_local b
