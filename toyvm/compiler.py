@@ -33,12 +33,12 @@ class FuncDefCompiler:
     def new_label(self, stem):
         n = self.label_counter
         self.label_counter += 1
-        return f'{stem}{n}'
+        return f'{stem}_{n}'
 
     def new_labels(self, *stems):
         n = self.label_counter
         self.label_counter += 1
-        return [f'{stem}{n}' for stem in stems]
+        return [f'{stem}_{n}' for stem in stems]
 
     def emit(self, opname, *args):
         op = OpCode(opname, *args)
@@ -121,16 +121,15 @@ class FuncDefCompiler:
         self.emit('pop')
 
     def stmt_For(self, stmt):
+        for_, itername, endfor = self.new_labels('for', '@iter', 'endfor')
         target = self.get_Name(stmt.target)
         self.compile_expr(stmt.iter)
-        itername = '@iter0' # XXX unique name
         self.emit('get_iter', itername)
-        loop_pc = self.pc()
-        for_iter_op = self.emit('for_iter', itername, target, None)
+        self.emit('label', for_)
+        self.emit('for_iter', itername, target, endfor)
         self.compile_many_stmts(stmt.body)
-        self.emit('br', loop_pc)
-        endfor_pc = self.pc()
-        for_iter_op.args = (itername, target, endfor_pc)
+        self.emit('br', for_)
+        self.emit('label', endfor)
 
     def get_w_const(self, expr):
         assert isinstance(expr, ast.Constant)

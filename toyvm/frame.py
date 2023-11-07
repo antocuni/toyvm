@@ -149,12 +149,12 @@ class Frame:
         w_iter = w_iterable.get_iter()
         self.locals[itername] = w_iter
 
-    def op_for_iter(self, itername, targetname, endfor_pc):
+    def op_for_iter(self, itername, targetname, endfor):
         w_iter = self.locals[itername]
         w_value = w_iter.iter_next()
         if w_value == 'STOP':
             del self.locals[itername]
-            self.pc = endfor_pc - 1
+            self.jump(endfor)
         else:
             self.locals[targetname] = w_value
 

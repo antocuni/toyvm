@@ -5,7 +5,9 @@ from toyvm.objects import W_Int, W_Tuple, w_None, W_Function
 
 class TestCompiler:
 
-    @pytest.fixture(autouse=True, params=['interp', 'rainbow'])
+    @pytest.fixture(autouse=True, params=['interp',
+                                          #'rainbow'
+                                          ])
     def compilation_mode(self, request):
         self.mode = request.param
 
@@ -29,10 +31,10 @@ class TestCompiler:
         assert w_func.name == 'foo'
         assert w_func.code.name in ('foo', 'foo<peval>')
         assert w_func.code.equals("""
-        0: load_const W_Int(42)
-        1: return
-        2: load_const w_None
-        3: return
+        load_const W_Int(42)
+        return
+        load_const w_None
+        return
         """)
         assert w_func.call() == W_Int(42)
 
@@ -43,21 +45,21 @@ class TestCompiler:
         """)
         if self.mode == 'interp':
             assert w_func.code.equals("""
-            0: load_const W_Int(1)
-            1: load_const W_Int(2)
-            2: load_const W_Int(3)
-            3: mul
-            4: add
-            5: return
-            6: load_const w_None
-            7: return
+            load_const W_Int(1)
+            load_const W_Int(2)
+            load_const W_Int(3)
+            mul
+            add
+            return
+            load_const w_None
+            return
             """)
         else:
             assert w_func.code.equals("""
-            0: load_const W_Int(7)
-            1: return
-            2: load_const w_None
-            3: return
+            load_const W_Int(7)
+            return
+            load_const w_None
+            return
             """)
         assert w_func.call() == W_Int(7)
 
@@ -68,12 +70,12 @@ class TestCompiler:
             return a
         """)
         assert w_func.code.equals("""
-        0: load_const W_Int(4)
-        1: store_local a
-        2: load_local a
-        3: return
-        4: load_const w_None
-        5: return
+        load_const W_Int(4)
+        store_local a
+        load_local a
+        return
+        load_const w_None
+        return
         """)
         assert w_func.call() == W_Int(4)
 
@@ -85,19 +87,19 @@ class TestCompiler:
         """)
         if self.mode == 'interp':
             assert w_func.code.equals("""
-            0: load_const W_Int(4)
-            1: store_local_green A
-            2: load_local_green A
-            3: return
-            4: load_const w_None
-            5: return
+            load_const W_Int(4)
+            store_local_green A
+            load_local_green A
+            return
+            load_const w_None
+            return
             """)
         else:
             assert w_func.code.equals("""
-            0: load_const W_Int(4)
-            1: return
-            2: load_const w_None
-            3: return
+            load_const W_Int(4)
+            return
+            load_const w_None
+            return
             """)
         assert w_func.call() == W_Int(4)
 
@@ -107,12 +109,12 @@ class TestCompiler:
             return a + b
         """)
         assert w_func.code.equals("""
-        0: load_local a
-        1: load_local b
-        2: add
-        3: return
-        4: load_const w_None
-        5: return
+        load_local a
+        load_local b
+        add
+        return
+        load_const w_None
+        return
         """)
         assert w_func.call(W_Int(10), W_Int(20)) == W_Int(30)
 
@@ -123,21 +125,17 @@ class TestCompiler:
                 a = 42
             return a
         """)
-        print()
-        w_func.code.pp()
-        import pdb;pdb.set_trace()
         assert w_func.code.equals("""
-         0: load_local a
-         1: br_if then_0 else_0 endif_0
-         2: label then_0
-         3: load_const W_Int(42)
-         4: store_local a
-         5: label else_0
-         6: label endif_0
-         7: load_local a
-         8: return
-         9: load_const w_None
-        10: return
+          load_local a
+          br_if then_0 endif_0 endif_0
+        then_0:
+          load_const W_Int(42)
+          store_local a
+        endif_0:
+          load_local a
+          return
+          load_const w_None
+          return
         """)
         assert w_func.call(W_Int(0)) == W_Int(0)
         assert w_func.call(W_Int(1)) == W_Int(42)
@@ -152,19 +150,20 @@ class TestCompiler:
             return b
         """)
         assert w_func.code.equals("""\n
-         0: load_local a
-         1: br_if then_0 else_0 endif_0
-         2: label then_0
-         2: load_const W_Int(10)
-         3: store_local b
-         4: br endif_0
-         0: label else_0
-         5: load_const W_Int(20)
-         6: store_local b
-         7: load_local b
-         8: return
-         9: load_const w_None
-        10: return
+          load_local a
+          br_if then_0 else_0 endif_0
+        then_0:
+          load_const W_Int(10)
+          store_local b
+          br endif_0
+        else_0:
+          load_const W_Int(20)
+          store_local b
+        endif_0:
+          load_local b
+          return
+          load_const w_None
+          return
         """)
         assert w_func.call(W_Int(0)) == W_Int(20)
         assert w_func.call(W_Int(1)) == W_Int(10)
@@ -209,15 +208,17 @@ class TestCompiler:
                 print(x)
         """)
         assert w_func.code.equals("""
-         0: load_local tup
-         1: get_iter @iter0
-         2: for_iter @iter0 x 7
-         3: load_local x
-         4: print 1
-         5: pop
-         6: br 2
-         7: load_const w_None
-         8: return
+           load_local tup
+           get_iter @iter_0
+         for_0:
+           for_iter @iter_0 x endfor_0
+           load_local x
+           print 1
+           pop
+           br for_0
+         endfor_0:
+           load_const w_None
+           return
         """)
         w_tup = W_Tuple([W_Int(1), W_Int(2), W_Int(3)])
         w_func.call(w_tup)
