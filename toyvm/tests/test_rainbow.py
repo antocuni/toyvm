@@ -101,27 +101,33 @@ class TestRainbow:
         code2 = self.peval(code)
         assert code2.body == code.body
 
-    def test_pc_remap_branch(self):
+    def test_br_if_with_green_ops(self):
         code = CodeObject('fn', [
-            OpCode('load_local', 'a'),       # 0
-            OpCode('br_if', 2, 6, 8),        # 1
-            OpCode('load_const', W_Int(2)),  # 2 "then"
-            OpCode('load_const', W_Int(3)),  # 3
-            OpCode('add'),                   # 4
-            OpCode('return'),                # 5
-            OpCode('load_const', W_Int(6)),  # 6
-            OpCode('return'),                # 7
-            OpCode('abort', 'unreachable')   # 8
+            OpCode('load_local', 'a'),
+            OpCode('br_if', 'then_0', 'else_0', 'endif_0'),
+            OpCode('label', 'then_0'),
+            OpCode('load_const', W_Int(2)),
+            OpCode('load_const', W_Int(3)),
+            OpCode('add'),
+            OpCode('return'),
+            OpCode('label', 'else_0'),
+            OpCode('load_const', W_Int(6)),
+            OpCode('return'),
+            OpCode('label', 'endif_0'),
+            OpCode('abort', 'unreachable')
         ])
         code2 = self.peval(code)
         assert code2.body == [
-            OpCode('load_local', 'a'),       # 0
-            OpCode('br_if', 2, 4, 6),        # 1
-            OpCode('load_const', W_Int(5)),  # 2 "then"
-            OpCode('return'),                # 3
-            OpCode('load_const', W_Int(6)),  # 4
-            OpCode('return'),                # 5
-            OpCode('abort', 'unreachable')   # 6
+            OpCode('load_local', 'a'),
+            OpCode('br_if', 'then_0', 'else_0', 'endif_0'),
+            OpCode('label', 'then_0'),
+            OpCode('load_const', W_Int(5)),
+            OpCode('return'),
+            OpCode('label', 'else_0'),
+            OpCode('load_const', W_Int(6)),
+            OpCode('return'),
+            OpCode('label', 'endif_0'),
+            OpCode('abort', 'unreachable')
         ]
         #
         w_f1 = W_Function('f1', 'a', code)
