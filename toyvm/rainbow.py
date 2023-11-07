@@ -23,32 +23,12 @@ class RainbowInterpreter:
         self.out = CodeObject(code.name + '<peval>', [])
         self.stack_length = 0
         self.greenframe = Frame(code)
-        self.pcmap = {} # maps code PCs to out PCs
-
-    @property
-    def out_pc(self):
-        return len(self.out.body)
-
-    def record_jump_target(self, in_pc):
-        self.pcmap[in_pc] = self.out_pc
 
     def emit(self, op):
         self.out.emit(op)
 
-    def print_pcmap(self):
-        print('original')
-        self.code.pp()
-        print()
-        print('peval')
-        self.out.pp()
-        print()
-        print('pcmap')
-        for a, b in self.pcmap.items():
-            print(f'{a} -> {b}')
-
     def run(self):
         self.run_range(0, len(self.code.body))
-        self.fix_pcs()
 
     def run_range(self, pc_start, pc_end):
         pc = pc_start
@@ -121,26 +101,26 @@ class RainbowInterpreter:
         assert self.n_greens() >= 1, 'store_local_green called on a red'
         return self.op_green(pc, op, varname)
 
-    def op_br_if(self, pc, op, then_pc, else_pc, endif_pc):
+    def get_pc(self, label):
+        return self.greenframe.labels[label]
+
+    def get_pcs(self, *labels):
+        return [self.get_pc(l) for l in labels]
+
+    def op_br_if(self, pc, op, then, else_, endif):
+        pc_then, pc_else, pc_endif = self.get_pcs(then, else_, endif)
         if self.n_greens() >= 1:
             # green case
             w_cond = self.greenframe.stack.pop()
             if w_cond.value:
-                self.run_range(then_pc, else_pc)
+                self.run_range(pc_then, pc_else)
             else:
-                self.run_range(else_pc, endif_pc)
-            return endif_pc
+                self.run_range(pc_else, pc_endif)
+            return pc_endif
         else:
             self.op_red(pc, op, *op.args) # emit br_if
-            self.record_jump_target(then_pc)
-            #
-            self.run_range(then_pc, else_pc)
-            self.record_jump_target(else_pc)
-            #
-            self.run_range(else_pc, endif_pc)
-            self.record_jump_target(endif_pc)
-            #
-            return endif_pc
+            self.run_range(pc_then, pc_endif)
+            return pc_endif
 
     def op_get_iter(self, pc, op, itername):
         is_red = self.n_greens() < 1 or not self.greenframe.stack[-1].unroll

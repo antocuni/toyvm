@@ -14,7 +14,9 @@ class Frame:
     def init_labels(self):
         for pc, op in enumerate(self.code.body):
             if op.name == 'label':
-                self.labels[op.args[0]] = pc
+                l = op.args[0]
+                assert l not in self.labels, f'duplicate label: {l}'
+                self.labels[l] = pc
 
     def push(self, w_value):
         assert isinstance(w_value, W_Object)

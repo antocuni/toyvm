@@ -65,30 +65,38 @@ class TestRainbow:
 
     def test_green_br_if(self):
         code = CodeObject('fn', [
-            OpCode('load_const', W_Int(1)),  # 0
-            OpCode('br_if', 2, 4, 6),        # 1
-            OpCode('load_const', W_Int(2)),  # 2 "then"
-            OpCode('return'),                # 3
-            OpCode('load_const', W_Int(3)),  # 4 "else"
-            OpCode('return'),                # 5
-            OpCode('abort', 'unreachable')   # 6 "endif"
+            OpCode('load_const', W_Int(1)),
+            OpCode('br_if', 'then_0', 'else_0', 'endif_0'),
+            OpCode('label', 'then_0'),
+            OpCode('load_const', W_Int(2)),
+            OpCode('return'),
+            OpCode('label', 'else_0'),
+            OpCode('load_const', W_Int(3)),
+            OpCode('return'),
+            OpCode('label', 'endif_0'),
+            OpCode('abort', 'unreachable')
         ])
         code2 = self.peval(code)
         assert code2.body == [
+            OpCode('label', 'then_0'),
             OpCode('load_const', W_Int(2)),
             OpCode('return'),
+            OpCode('label', 'endif_0'),
             OpCode('abort', 'unreachable'),
         ]
 
     def test_red_br_if(self):
         code = CodeObject('fn', [
-            OpCode('load_local', 'a'),       # 0
-            OpCode('br_if', 2, 4, 6),        # 1
-            OpCode('load_const', W_Int(2)),  # 2 "then"
-            OpCode('return'),                # 3
-            OpCode('load_const', W_Int(3)),  # 4 "else"
-            OpCode('return'),                # 5
-            OpCode('abort', 'unreachable')   # 6 "endif"
+            OpCode('load_local', 'a'),
+            OpCode('br_if', 'then_0', 'else_0', 'endif_0'),
+            OpCode('label', 'then_0'),
+            OpCode('load_const', W_Int(2)),
+            OpCode('return'),
+            OpCode('label', 'else_0'),
+            OpCode('load_const', W_Int(3)),
+            OpCode('return'),
+            OpCode('label', 'endif_0'),
+            OpCode('abort', 'unreachable')
         ])
         code2 = self.peval(code)
         assert code2.body == code.body
