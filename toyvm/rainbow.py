@@ -46,22 +46,6 @@ class RainbowInterpreter:
             assert type(pc_next) is int
             return pc_next
 
-    def fix_pcs(self):
-        def tr(*pcs):
-            return map(self.pcmap.__getitem__, pcs)
-
-        for i, op in enumerate(self.out.body):
-            if op.name == 'br':
-                pc_target, = tr(*op.args)
-                op.replace_args(pc_target)
-            elif op.name == 'br_if':
-                then_pc, else_pc, endif_pc = tr(*op.args)
-                op.replace_args(then_pc, else_pc, endif_pc)
-            elif op.name == 'for_iter':
-                itername, targetname, endfor_pc = op.args
-                endfor_pc, = tr(endfor_pc)
-                op.replace_args(itername, targetname, endfor_pc)
-
     def n_greens(self):
         return len(self.greenframe.stack)
 
@@ -133,28 +117,29 @@ class RainbowInterpreter:
         assert self.n_greens() >= 1, 'UNROLL() called on a red variable'
         return self.op_green(pc, op)
 
-    def op_for_iter(self, pc, op, itername, targetname, endfor_pc):
+    def op_for_iter(self, pc, op, itername, targetname, endfor):
         w_iter = self.greenframe.locals.get(itername)
         if w_iter is None:
             # this is a non-unrolling for
             self.record_jump_target(pc)
             self.op_red(pc, op, *op.args)
-            self.run_range(pc+1, endfor_pc)
-            self.record_jump_target(endfor_pc)
-            return endfor_pc
+            self.run_range(pc+1, pc_endfor)
+            self.record_jump_target(pc_endfor)
+            return pc_endfor
         else:
             return self.op_unroll_for_iter(pc, op, itername, targetname,
-                                           endfor_pc, w_iter)
+                                           endfor, w_iter)
 
     def op_unroll_for_iter(self, pc, op, itername, targetname,
-                           endfor_pc, w_iter):
+                           endfor, w_iter):
+        pc_endfor = self.get_pc(endfor)
         assert w_iter.unroll
         assert targetname.isupper()
-        br_pc = endfor_pc - 1
-        assert self.code.body[br_pc].name == 'br' # op to loop back
+        pc_br = pc_endfor - 1
+        assert self.code.body[pc_br].name == 'br' # op to loop back
         #
         for w_item in w_iter._iter:
             self.greenframe.locals[targetname] = w_item
-            self.run_range(pc+1, br_pc)
+            self.run_range(pc+1, pc_br)
         #
-        return endfor_pc
+        return pc_endfor

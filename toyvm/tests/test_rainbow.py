@@ -167,12 +167,14 @@ class TestRainbow:
             OpCode('load_const', w_tup),
             OpCode('unroll'),
             OpCode('get_iter', '@iter0'),
-            OpCode('for_iter', '@iter0', 'X', 11),
+            OpCode('label', 'for_0'),
+            OpCode('for_iter', '@iter0', 'X', 'endfor_0'),
             OpCode('load_local', 'a'),
             OpCode('load_local_green', 'X'),
             OpCode('add'),
             OpCode('store_local', 'a'),
-            OpCode('br', 5),
+            OpCode('br', 'for_0'),
+            OpCode('label', 'endfor_0'),
             OpCode('load_local', 'a'),
             OpCode('return'),
         ])
@@ -180,6 +182,7 @@ class TestRainbow:
         assert code2.body == [
             OpCode('load_const', W_Int(0)),
             OpCode('store_local', 'a'),
+            OpCode('label', 'for_0'),
 
             # unrolled iteration 1
             OpCode('load_local', 'a'),
@@ -193,6 +196,7 @@ class TestRainbow:
             OpCode('add'),
             OpCode('store_local', 'a'),
 
+            OpCode('label', 'endfor_0'),
             OpCode('load_local', 'a'),
             OpCode('return')
         ]
