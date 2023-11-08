@@ -3,7 +3,10 @@ from toyvm.compiler import toy_compile
 from toyvm.rainbow import peval
 from toyvm.objects import W_Int, W_Tuple, w_None, W_Function
 
-COMPILATION_MODES = ['interp', 'rainbow']
+COMPILATION_MODES = [
+    pytest.param('interp', marks=[pytest.mark.interp]),
+    pytest.param('rainbow', marks=[pytest.mark.rainbow]),
+]
 
 class TestCompiler:
 
@@ -237,7 +240,6 @@ class TestCompiler:
         w_res = w_func.call()
         assert w_res == W_Int(6)
 
-    @pytest.mark.skip("WIP")
     def test_red_if_inside_for_unroll(self):
         w_func = self.compile("""
         def foo():

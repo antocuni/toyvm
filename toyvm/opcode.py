@@ -1,5 +1,6 @@
 import textwrap
 from dataclasses import dataclass
+from toyvm.utils import Color
 
 STACK_EFFECT = {
     # opname: (num_pops, num_pushes)
@@ -73,6 +74,16 @@ class OpCode:
         pops, pushes = STACK_EFFECT[self.name]
         return pushes - pops
 
+    def relabel(self, label_map):
+        if self.name in ('br', 'br_if', 'label'):
+            args = tuple(map(label_map.__getitem__, self.args))
+        elif self.name == 'for_iter':
+            itername, targetname, endfor = self.args
+            endfor = label_map[endfor]
+            args = itername, targetname, endfor
+        else:
+            args = self.args
+        return OpCode(self.name, *args)
 
 class CodeObject:
 
@@ -83,18 +94,22 @@ class CodeObject:
     def emit(self, op):
         self.body.append(op)
 
-    def dump(self):
+    def dump(self, *, show_pc=False, use_colors=False):
         lines = []
-        for op in self.body:
+        for pc, op in enumerate(self.body):
             if op.name == 'label':
-                l = op.args[0]
-                lines.append(f'{l}:')
+                line = f'{op.args[0]}:'
+                if use_colors:
+                    line = Color.set('yellow', line)
+                lines.append(line)
             else:
                 lines.append(f'  {op.str()}')
+            if show_pc:
+                lines[-1] = f'{pc:3d}: {lines[-1]}'
         return '\n'.join(lines)
 
     def pp(self):
-        print(self.dump())
+        print(self.dump(show_pc=True, use_colors=True))
 
     def equals(self, expected):
         dumped = textwrap.dedent(self.dump())

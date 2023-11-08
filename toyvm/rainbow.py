@@ -23,20 +23,73 @@ class RainbowInterpreter:
         self.out = CodeObject(code.name + '<peval>', [])
         self.stack_length = 0
         self.greenframe = Frame(code)
+        #
+        # ---- init the label map attributes ----
+        # labels are in the form "stem_N", where N is an unique id for every
+        # group of label. First, we find the highest one
+        self.label_map = None
+        self.max_label_id = 0
+        for label in self.greenframe.labels:
+            stem, id = label.rsplit('_', 1)
+            self.max_label_id = max(self.max_label_id, int(id))
+
+    def make_label_map(self, pc_start, pc_end):
+        """
+        Search for all 'label' opcodes inside the given range, and create a
+        mapping to give them unique names. This is needed .g. to unroll a
+        loop, because we need unique labels for each iteration.
+        """
+        self.label_map = {}
+        self.max_label_id += 1
+        newid = self.max_label_id
+        for pc in range(pc_start, pc_end):
+            op = self.code.body[pc]
+            if op.name == 'label':
+                label = op.args[0]
+                stem, id = label.rsplit('_', 1)
+                self.label_map[label] = f'{stem}_{newid}'
+
+    def reset_label_map(self):
+        self.label_map = None
 
     def emit(self, op):
+        if self.label_map is not None:
+            op = op.relabel(self.label_map)
         self.out.emit(op)
 
+    def get_pc(self, label):
+        """
+        Get the PC corresponding to the given named label
+        """
+        return self.greenframe.labels[label]
+
+    def get_pcs(self, *labels):
+        """
+        Same as get_pc, but for multiple labels
+        """
+        return [self.get_pc(l) for l in labels]
+
     def run(self):
+        """
+        Do abstract interpretation of the whole code
+        """
         self.run_range(0, len(self.code.body))
 
     def run_range(self, pc_start, pc_end):
+        """
+        Do abstract interpretation of the given code range
+        """
         pc = pc_start
         while pc < pc_end:
             pc = self.run_single_op(pc)
         self.flush()
 
     def run_single_op(self, pc):
+        """
+        Do abstract interpretation of the op at the given PC.
+
+        Return the PC of the operation to execute next.
+        """
         op = self.code.body[pc].copy()
         meth = getattr(self, f'op_{op.name}', self.op_default)
         pc_next = meth(pc, op, *op.args)
@@ -85,12 +138,6 @@ class RainbowInterpreter:
         assert self.n_greens() >= 1, 'store_local_green called on a red'
         return self.op_green(pc, op, varname)
 
-    def get_pc(self, label):
-        return self.greenframe.labels[label]
-
-    def get_pcs(self, *labels):
-        return [self.get_pc(l) for l in labels]
-
     def op_br_if(self, pc, op, then, else_, endif):
         pc_then, pc_else, pc_endif = self.get_pcs(then, else_, endif)
         if self.n_greens() >= 1:
@@ -138,6 +185,8 @@ class RainbowInterpreter:
         #
         for w_item in w_iter._iter:
             self.greenframe.locals[targetname] = w_item
+            self.make_label_map(pc+1, pc_br)
             self.run_range(pc+1, pc_br)
+            self.reset_label_map()
         #
         return pc_endfor

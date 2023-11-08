@@ -25,7 +25,7 @@ class W_Str(W_Object):
     value: str
 
     def __repr__(self):
-        return f'W_Str({self.value})'
+        return f'W_Str({self.value!r})'
 
     def str(self):
         return self.value
