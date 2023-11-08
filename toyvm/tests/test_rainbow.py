@@ -196,7 +196,6 @@ class TestRainbow:
             OpCode('add'),
             OpCode('store_local', 'a'),
 
-            OpCode('label', 'endfor_0'),
             OpCode('load_local', 'a'),
             OpCode('return')
         ]

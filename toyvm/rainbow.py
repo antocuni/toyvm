@@ -189,4 +189,4 @@ class RainbowInterpreter:
             self.run_range(pc+1, pc_br)
             self.reset_label_map()
         #
-        return pc_endfor
+        return pc_endfor+1

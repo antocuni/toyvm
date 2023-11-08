@@ -108,8 +108,8 @@ class CodeObject:
                 lines[-1] = f'{pc:3d}: {lines[-1]}'
         return '\n'.join(lines)
 
-    def pp(self):
-        print(self.dump(show_pc=True, use_colors=True))
+    def pp(self, *, show_pc=True, use_colors=True):
+        print(self.dump(show_pc=show_pc, use_colors=use_colors))
 
     def equals(self, expected):
         dumped = textwrap.dedent(self.dump())

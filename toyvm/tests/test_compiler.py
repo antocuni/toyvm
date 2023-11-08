@@ -252,3 +252,29 @@ class TestCompiler:
         """)
         w_res = w_func.call()
         assert w_res == W_Int(12)
+
+    def test_nested_for_unroll(self):
+        w_func = self.compile(r"""
+        def foo():
+            COLS = ("a", "b")
+            ROWS = ("1", "2", "3")
+            OUT = ""
+            for R in UNROLL(ROWS):
+                for C in UNROLL(COLS):
+                    OUT = OUT + C + R + " "
+                OUT = OUT + "-- "
+            return OUT
+        """)
+        w_res = w_func.call()
+        assert w_res.value == "a1 b1 -- a2 b2 -- a3 b3 -- "
+        if self.mode == 'rainbow':
+            assert w_func.code.equals("""
+            for_0:
+            for_2:
+            for_5:
+            for_8:
+              load_const W_Str('a1 b1 -- a2 b2 -- a3 b3 -- ')
+              return
+              load_const w_None
+              return
+            """)
