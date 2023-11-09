@@ -270,11 +270,32 @@ class TestCompiler:
         if self.mode == 'rainbow':
             assert w_func.code.equals("""
             for_0:
-            for_2:
-            for_5:
-            for_8:
+            for_1#0:
+            for_1#3:
+            for_1#6:
               load_const W_Str('a1 b1 -- a2 b2 -- a3 b3 -- ')
               return
               load_const w_None
               return
             """)
+
+    def test_nested_for_unroll_with_if(self):
+        w_func = self.compile(r"""
+        def foo(flag):
+            COLS = ("a", "b")
+            ROWS = ("1", "2")
+            out = ""
+            for R in UNROLL(ROWS):
+                out = out + R
+                if flag:
+                    for C in UNROLL(COLS):
+                        out = out + C
+                else:
+                    out = out + "-"
+            return out
+        """)
+        w_res = w_func.call(W_Int(1))
+        assert w_res.value == "1ab2ab"
+        #
+        w_res = w_func.call(W_Int(0))
+        assert w_res.value == "1-2-"

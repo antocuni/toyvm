@@ -24,37 +24,31 @@ class RainbowInterpreter:
         self.stack_length = 0
         self.greenframe = Frame(code)
         #
-        # ---- init the label map attributes ----
-        # labels are in the form "stem_N", where N is an unique id for every
-        # group of label. First, we find the highest one
-        self.label_map = None
-        self.max_label_id = 0
-        for label in self.greenframe.labels:
-            stem, id = label.rsplit('_', 1)
-            self.max_label_id = max(self.max_label_id, int(id))
+        self.label_maps = []
+        self.unique_id = 0
 
-    def make_label_map(self, pc_start, pc_end):
+    def push_label_map(self, pc_start, pc_end):
         """
         Search for all 'label' opcodes inside the given range, and create a
         mapping to give them unique names. This is needed .g. to unroll a
         loop, because we need unique labels for each iteration.
         """
-        self.label_map = {}
-        self.max_label_id += 1
-        newid = self.max_label_id
+        newid = self.unique_id
+        self.unique_id += 1
+        m = {}
         for pc in range(pc_start, pc_end):
             op = self.code.body[pc]
             if op.name == 'label':
                 label = op.args[0]
-                stem, id = label.rsplit('_', 1)
-                self.label_map[label] = f'{stem}_{newid}'
+                m[label] = f'{label}#{newid}'
+        self.label_maps.append(m)
 
-    def reset_label_map(self):
-        self.label_map = None
+    def pop_label_map(self):
+        self.label_maps.pop()
 
     def emit(self, op):
-        if self.label_map is not None:
-            op = op.relabel(self.label_map)
+        if self.label_maps:
+            op = op.relabel(self.label_maps[-1])
         self.out.emit(op)
 
     def get_pc(self, label):
@@ -185,8 +179,8 @@ class RainbowInterpreter:
         #
         for w_item in w_iter._iter:
             self.greenframe.locals[targetname] = w_item
-            self.make_label_map(pc+1, pc_br)
+            self.push_label_map(pc+1, pc_br)
             self.run_range(pc+1, pc_br)
-            self.reset_label_map()
+            self.pop_label_map()
         #
         return pc_endfor+1

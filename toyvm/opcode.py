@@ -98,9 +98,18 @@ class CodeObject:
         lines = []
         for pc, op in enumerate(self.body):
             if op.name == 'label':
-                line = f'{op.args[0]}:'
+                label = op.args[0]
                 if use_colors:
-                    line = Color.set('yellow', line)
+                    if '#' in label:
+                        label, at = label.rsplit('#', 1)
+                        at = '#' + at
+                    else:
+                        at = ''
+                    line = (Color.set('yellow', label) +
+                            Color.set('blue', at))
+                else:
+                    line = f'{label}:'
+
                 lines.append(line)
             else:
                 lines.append(f'  {op.str()}')
