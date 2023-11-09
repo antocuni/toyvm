@@ -1,8 +1,9 @@
 import ast
 import textwrap
+import symtable
 from collections import Counter
 from toyvm.opcode import CodeObject, OpCode
-from toyvm.objects import W_Int, W_Str, W_Function, w_None
+from toyvm.objects import W_Int, W_Str, W_Function, w_None, W_Module
 
 try:
     # add .pp() (pretty print) to all AST classes
@@ -14,21 +15,33 @@ except ImportError:
 def toy_compile(src, filename='<unknown>'):
     src = textwrap.dedent(src)
     root = ast.parse(src, filename)
-    assert len(root.body) == 1
-    funcdef = root.body[0]
-    assert isinstance(funcdef, ast.FunctionDef)
-    comp = FuncDefCompiler(funcdef)
-    return comp.compile()
+    w_mod = W_Module(globals_w={})
+    #
+    for funcdef in root.body:
+        assert isinstance(funcdef, ast.FunctionDef)
+        comp = FuncDefCompiler(funcdef, w_mod)
+        w_func = comp.compile()
+        w_mod.globals_w[w_func.name] = w_func
+    return w_mod
 
 class FuncDefCompiler:
 
-    def __init__(self, funcdef):
+    def __init__(self, funcdef, w_mod):
         self.funcdef = funcdef
-        # ok, this is very limited, we don't support any of the advanced
-        # argument passing features of python, and we just ignore *args and
-        # **kwargs
+        self.w_mod = w_mod
         self.code = CodeObject(funcdef.name, [])
         self.label_counter = 0
+        self.argnames = [a.arg for a in funcdef.args.args]
+        self.compute_local_vars()
+
+    def compute_local_vars(self):
+        self.local_vars = set()
+        self.local_vars.update(set(self.argnames))
+        for node in ast.walk(self.funcdef):
+            if isinstance(node, ast.Assign):
+                assert len(node.targets) == 1
+                varname = self.get_Name(node.targets[0])
+                self.local_vars.add(varname)
 
     def new_label(self, stem):
         n = self.label_counter
@@ -49,11 +62,11 @@ class FuncDefCompiler:
         return len(self.code.body)
 
     def compile(self):
-        argnames = [a.arg for a in self.funcdef.args.args]
         self.compile_many_stmts(self.funcdef.body)
         self.emit('load_const', w_None)
         self.emit('return')
-        return W_Function(self.funcdef.name, argnames, self.code)
+        return W_Function(self.funcdef.name, self.argnames, self.code,
+                          self.w_mod.globals_w)
 
     def compile_many_stmts(self, stmts):
         for stmt in stmts:
@@ -85,6 +98,7 @@ class FuncDefCompiler:
     def stmt_Assign(self, stmt):
         assert len(stmt.targets) == 1
         name = self.get_Name(stmt.targets[0])
+        assert name in self.local_vars
         self.compile_expr(stmt.value)
         if name.isupper():
             self.emit('store_local_green', name)
@@ -169,10 +183,13 @@ class FuncDefCompiler:
 
     def expr_Name(self, expr):
         name = expr.id
-        if name.isupper():
-            self.emit('load_local_green', name)
+        if name in self.local_vars:
+            if name.isupper():
+                self.emit('load_local_green', name)
+            else:
+                self.emit('load_local', name)
         else:
-            self.emit('load_local', name)
+            self.emit('load_nonlocal', name)
 
     def expr_Tuple(self, expr):
         for item in expr.elts:
@@ -180,6 +197,17 @@ class FuncDefCompiler:
         self.emit('make_tuple', len(expr.elts))
 
     def expr_Call(self, expr):
+        if (isinstance(expr.func, ast.Name) and
+            expr.func.id in ('print', 'UNROLL')):
+            self.expr_Call_builtin(expr)
+            return
+        #
+        self.compile_expr(expr.func)
+        for arg in expr.args:
+            self.compile_expr(arg)
+        self.emit('call', len(expr.args))
+
+    def expr_Call_builtin(self, expr):
         funcname = self.get_Name(expr.func)
         for arg in expr.args:
             self.compile_expr(arg)

@@ -37,10 +37,11 @@ class W_Function(W_Object):
     name: str
     argnames: list[str]
     code: CodeObject
+    globals_w: dict[str, W_Object]
 
     def call(self, *args_w):
         from toyvm.frame import Frame
-        frame = Frame(self.code)
+        frame = Frame(self)
         # setup parameters
         assert len(self.argnames) == len(args_w)
         for varname, w_arg in zip(self.argnames, args_w):
@@ -94,3 +95,9 @@ class W_NoneType(W_Object):
         return '<toy None>'
 
 w_None = W_NoneType()
+
+
+@dataclass
+class W_Module(W_Object):
+    type = 'module'
+    globals_w: dict[str, W_Object]

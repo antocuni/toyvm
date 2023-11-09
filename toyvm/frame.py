@@ -1,10 +1,12 @@
 import operator
-from toyvm.objects import W_Object, W_Int, W_Str, W_Tuple, w_None
+from toyvm.objects import W_Object, W_Int, W_Str, W_Tuple, w_None, W_Function
 
 class Frame:
 
-    def __init__(self, code):
-        self.code = code
+    def __init__(self, w_func):
+        assert isinstance(w_func, W_Function)
+        self.w_func = w_func
+        self.code = w_func.code
         self.locals = {}
         self.pc = 0
         self.stack = []
@@ -106,6 +108,10 @@ class Frame:
     op_store_local_green = op_store_local
     op_load_local_green = op_load_local
 
+    def op_load_nonlocal(self, name):
+        w_obj = self.w_func.globals_w[name]
+        self.push(w_obj)
+
     def op_label(self, l):
         assert self.labels[l] == self.pc
 
@@ -142,6 +148,12 @@ class Frame:
         strs = [w_item.str() for w_item in items_w]
         print(*strs)
         self.push(w_None)
+
+    def op_call(self, n):
+        items_w = self.popn(n)
+        w_callable = self.pop()
+        w_res = w_callable.call(*items_w)
+        self.push(w_res)
 
     def op_pop(self):
         self.pop()

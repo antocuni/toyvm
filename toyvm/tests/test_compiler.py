@@ -15,13 +15,11 @@ class TestCompiler:
         self.mode = request.param
 
     def compile(self, src):
-        self.w_func = toy_compile(src)
+        self.w_mod = toy_compile(src)
+        w_func = list(self.w_mod.globals_w.values())[0] # the first func
+        self.w_func = w_func
         if self.mode == 'rainbow':
-            code2 = peval(self.w_func.code)
-            self.w_func2 = W_Function(
-                self.w_func.name,
-                self.w_func.argnames,
-                code2)
+            self.w_func2 = peval(self.w_func)
             return self.w_func2
         else:
             return self.w_func
@@ -299,3 +297,16 @@ class TestCompiler:
         #
         w_res = w_func.call(W_Int(0))
         assert w_res.value == "1-2-"
+
+    def test_function_calls(self):
+        w_foo = self.compile("""
+        def foo(x, y):
+            return inc(x) * inc(y)
+
+        def inc(x):
+            return x + 1
+        """)
+        assert w_foo.name == 'foo'
+        w_inc = self.w_mod.globals_w['inc']
+        assert w_inc.call(W_Int(2)) == W_Int(3)
+        assert w_foo.call(W_Int(2), W_Int(9)) == W_Int(30)

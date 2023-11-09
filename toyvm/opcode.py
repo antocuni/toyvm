@@ -9,6 +9,7 @@ STACK_EFFECT = {
     'store_local': (1, 0),
     'load_local_green': (0, 1),
     'store_local_green': (1, 0),
+    'load_nonlocal': (0, 1),
     'return': (1, 0),
     'abort': (0, 0),
     'add': (2, 1),
@@ -20,6 +21,7 @@ STACK_EFFECT = {
     'br': (0, 0),
     'make_tuple': ('ARG', 1), # special, num_pops depends on the arg
     'print': ('ARG', 1),
+    'call': ('ARG', 1),
     'pop': (1, 0),
     'get_iter': (1, 0),
     'for_iter': (0, 0),

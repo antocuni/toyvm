@@ -1,28 +1,33 @@
 from dataclasses import dataclass
-from toyvm.objects import W_Object
+from toyvm.objects import W_Object, W_Function
 from toyvm.opcode import CodeObject, OpCode
 from toyvm.frame import Frame
 
-def peval(code):
+def peval(w_func):
     """
-    Perform partial evaluation on the given code object.
+    Perform partial evaluation on the given function object.
 
-    Return a new code object where all green ops have been evaluated.  This is
-    the main entry point for the rainbow interpreter.
+    Return a new function object where all green ops have been evaluated.
+    This is the main entry point for the rainbow interpreter.
     """
-    interp = RainbowInterpreter(code)
+    interp = RainbowInterpreter(w_func)
     interp.run()
-    return interp.out
-
+    code2 = interp.out
+    return W_Function(
+        name = w_func.name,
+        argnames = w_func.argnames,
+        code = code2,
+        globals_w = w_func.globals_w)
 
 
 class RainbowInterpreter:
 
-    def __init__(self, code):
-        self.code = code
-        self.out = CodeObject(code.name + '<peval>', [])
+    def __init__(self, w_func):
+        self.w_func = w_func
+        self.code = w_func.code
+        self.out = CodeObject(self.code.name + '<peval>', [])
         self.stack_length = 0
-        self.greenframe = Frame(code)
+        self.greenframe = Frame(w_func)
         #
         self.label_maps = []
         self.unique_id = 0
