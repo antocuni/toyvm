@@ -62,15 +62,25 @@ class FuncDefCompiler:
 
     def compute_local_vars(self):
         self.local_vars = set()
+        self.local_vars_green = set()
         self.local_vars.update(set(self.argnames))
+
+        def add(varname):
+            if varname.isupper():
+                self.local_vars_green.add(varname)
+            else:
+                self.local_vars.add(varname)
+
         for node in ast.walk(self.funcdef):
             if isinstance(node, ast.Assign):
                 assert len(node.targets) == 1
-                varname = self.get_Name(node.targets[0])
-                self.local_vars.add(varname)
+                add(self.get_Name(node.targets[0]))
             elif isinstance(node, ast.For):
                 varname = self.get_Name(node.target)
-                self.local_vars.add(varname)
+                add(varname)
+            elif isinstance(node, ast.FunctionDef):
+                varname = node.name
+                self.local_vars_green.add(varname)
 
     def new_label(self, stem):
         n = self.label_counter
@@ -98,7 +108,7 @@ class FuncDefCompiler:
 
     def make_func(self):
         code = self.make_code()
-        return W_Function(self.funcdef.name, code, self.w_mod.globals_w)
+        return W_Function(self.funcdef.name, code, self.w_mod.get_closure())
 
     def compile_many_stmts(self, stmts):
         for stmt in stmts:
@@ -130,9 +140,9 @@ class FuncDefCompiler:
     def stmt_Assign(self, stmt):
         assert len(stmt.targets) == 1
         name = self.get_Name(stmt.targets[0])
-        assert name in self.local_vars
+        assert name in self.local_vars or name in self.local_vars_green
         self.compile_expr(stmt.value)
-        if name.isupper():
+        if name in self.local_vars_green:
             self.emit('store_local_green', name)
         else:
             self.emit('store_local', name)
@@ -177,6 +187,12 @@ class FuncDefCompiler:
         self.emit('br', for_)
         self.emit('label', endfor)
 
+    def stmt_FunctionDef(self, stmt):
+        inner_comp = FuncDefCompiler(stmt, self.w_mod)
+        code = inner_comp.make_code()
+        self.emit('make_function', code)
+        self.emit('store_local_green', stmt.name)
+
     def get_w_const(self, expr):
         assert isinstance(expr, ast.Constant)
         if isinstance(expr.value, int):
@@ -215,11 +231,10 @@ class FuncDefCompiler:
 
     def expr_Name(self, expr):
         name = expr.id
-        if name in self.local_vars:
-            if name.isupper():
-                self.emit('load_local_green', name)
-            else:
-                self.emit('load_local', name)
+        if name in self.local_vars_green:
+            self.emit('load_local_green', name)
+        elif name in self.local_vars:
+            self.emit('load_local', name)
         else:
             if name in self.w_mod.green_funcs:
                 self.emit('load_nonlocal_green', name)

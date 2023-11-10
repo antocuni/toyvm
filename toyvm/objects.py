@@ -31,6 +31,21 @@ class W_Str(W_Object):
         return self.value
 
 
+class Closure:
+
+    def __init__(self, scopes):
+        self.scopes = scopes
+
+    def copy_and_append(self, ns_w):
+        new_scopes = self.scopes + [ns_w]
+        return Closure(new_scopes)
+
+    def lookup(self, name):
+        for ns_w in reversed(self.scopes):
+            if name in ns_w:
+                return ns_w[name]
+        raise KeyError(name)
+
 @dataclass
 class W_Function(W_Object):
     type = 'function'
@@ -38,7 +53,7 @@ class W_Function(W_Object):
     #
     name: str
     code: CodeObject
-    globals_w: dict[str, W_Object]
+    closure: Closure
 
     def call(self, *args_w):
         from toyvm.frame import Frame
@@ -102,3 +117,6 @@ w_None = W_NoneType()
 class W_Module(W_Object):
     type = 'module'
     globals_w: dict[str, W_Object]
+
+    def get_closure(self):
+        return Closure([self.globals_w])

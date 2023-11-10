@@ -16,7 +16,7 @@ def peval(w_func):
     return W_Function(
         name = w_func.name,
         code = code2,
-        globals_w = w_func.globals_w)
+        closure = w_func.closure)
 
 
 class RainbowInterpreter:

@@ -28,6 +28,7 @@ STACK_EFFECT = {
     'get_iter': (1, 0),
     'for_iter': (0, 0),
     'unroll': (1, 1),
+    'make_function': (0, 1),
 }
 
 PURE_OPS = set([
@@ -96,6 +97,9 @@ class CodeObject:
         self.name = name
         self.argnames = argnames
         self.body = body
+
+    def __repr__(self):
+        return f'<CodeObject {self.name!r}>'
 
     def emit(self, op):
         self.body.append(op)

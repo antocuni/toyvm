@@ -109,7 +109,7 @@ class Frame:
     op_load_local_green = op_load_local
 
     def op_load_nonlocal(self, name):
-        w_obj = self.w_func.globals_w[name]
+        w_obj = self.w_func.closure.lookup(name)
         self.push(w_obj)
 
     op_load_nonlocal_green = op_load_nonlocal
@@ -178,3 +178,9 @@ class Frame:
         w_value = self.pop()
         w_res = w_value.unroll()
         self.push(w_res)
+
+    def op_make_function(self, code):
+        # let's create a closure over the COPY of the current locals
+        closure = self.w_func.closure.copy_and_append(self.locals.copy())
+        w_func = W_Function(code.name, code, closure)
+        self.push(w_func)
