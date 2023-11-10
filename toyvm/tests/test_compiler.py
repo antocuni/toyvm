@@ -330,3 +330,16 @@ class TestCompiler:
             load_const w_None
             return
             """)
+
+    @pytest.mark.skip("WIP")
+    def test_closure(self):
+        w_make_adder = self.compile("""
+        def make_adder(x):
+            def add(y):
+                return 42 # x + y
+            return add
+        """)
+        w_add3 = w_make_adder.call(W_Int(3))
+        w_add5 = w_make_adder.call(W_Int(5))
+        assert w_add3(W_Int(4)) == W_Int(7)
+        assert w_add5(W_Int(4)) == W_Int(9)

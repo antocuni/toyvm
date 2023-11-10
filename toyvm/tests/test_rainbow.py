@@ -7,13 +7,13 @@ from toyvm.compiler import toy_compile
 class TestRainbow:
 
     def peval(self, code):
-        w_func = W_Function(code.name, [], code, {})
+        w_func = W_Function(code.name, code, {})
         self.interp = RainbowInterpreter(w_func)
         self.interp.run()
         return self.interp.out
 
     def test_simple(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_local', 'a'),
             OpCode('load_local', 'b'),
             OpCode('add'),
@@ -23,7 +23,7 @@ class TestRainbow:
         assert code2.body == code.body
 
     def test_green_op(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Int(1)),
             OpCode('load_const', W_Int(2)),
             OpCode('add'),
@@ -36,7 +36,7 @@ class TestRainbow:
         ]
 
     def test_red_green_green(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_local', 'a'),
             OpCode('load_const', W_Int(2)),
             OpCode('load_const', W_Int(3)),
@@ -53,7 +53,7 @@ class TestRainbow:
         ]
 
     def test_green_red_op(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Int(1)),
             OpCode('load_local', 'a'),
             OpCode('add'),
@@ -65,7 +65,7 @@ class TestRainbow:
         assert code2.body == code.body
 
     def test_green_br_if(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Int(1)),
             OpCode('br_if', 'then_0', 'else_0', 'endif_0'),
             OpCode('label', 'then_0'),
@@ -87,7 +87,7 @@ class TestRainbow:
         ]
 
     def test_red_br_if(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_local', 'a'),
             OpCode('br_if', 'then_0', 'else_0', 'endif_0'),
             OpCode('label', 'then_0'),
@@ -103,7 +103,7 @@ class TestRainbow:
         assert code2.body == code.body
 
     def test_br_if_with_green_ops(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', ['a'], [
             OpCode('load_local', 'a'),
             OpCode('br_if', 'then_0', 'else_0', 'endif_0'),
             OpCode('label', 'then_0'),
@@ -131,15 +131,15 @@ class TestRainbow:
             OpCode('abort', 'unreachable')
         ]
         #
-        w_f1 = W_Function('f1', 'a', code, {})
-        w_f2 = W_Function('f2', 'a', code2, {})
+        w_f1 = W_Function('f1', code, {})
+        w_f2 = W_Function('f2', code2, {})
         assert w_f1.call(W_Int(0)) == W_Int(6)
         assert w_f1.call(W_Int(1)) == W_Int(5)
         assert w_f2.call(W_Int(0)) == W_Int(6)
         assert w_f2.call(W_Int(1)) == W_Int(5)
 
     def test_green_locals(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Int(42)),
             OpCode('store_local_green', 'A'),
             OpCode('load_local_green', 'A'),
@@ -152,7 +152,7 @@ class TestRainbow:
         ]
 
     def test_green_locals_sanity_check(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_local', 'a'),
             OpCode('store_local_green', 'B'),
         ])
@@ -162,7 +162,7 @@ class TestRainbow:
 
     def test_unroll(self):
         w_tup = W_Tuple([W_Int(2), W_Int(3)])
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Int(0)),
             OpCode('store_local', 'a'),
             OpCode('load_const', w_tup),

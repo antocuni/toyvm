@@ -15,7 +15,6 @@ def peval(w_func):
     code2 = interp.out
     return W_Function(
         name = w_func.name,
-        argnames = w_func.argnames,
         code = code2,
         globals_w = w_func.globals_w)
 
@@ -25,7 +24,8 @@ class RainbowInterpreter:
     def __init__(self, w_func):
         self.w_func = w_func
         self.code = w_func.code
-        self.out = CodeObject(self.code.name + '<peval>', [])
+        self.out = CodeObject(self.code.name + '<peval>',
+                              self.code.argnames, [])
         self.stack_length = 0
         self.greenframe = Frame(w_func)
         #

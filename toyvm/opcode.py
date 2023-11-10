@@ -92,8 +92,9 @@ class OpCode:
 
 class CodeObject:
 
-    def __init__(self, name, body):
+    def __init__(self, name, argnames, body):
         self.name = name
+        self.argnames = argnames
         self.body = body
 
     def emit(self, op):

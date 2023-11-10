@@ -37,7 +37,6 @@ class W_Function(W_Object):
     is_green = False
     #
     name: str
-    argnames: list[str]
     code: CodeObject
     globals_w: dict[str, W_Object]
 
@@ -45,8 +44,8 @@ class W_Function(W_Object):
         from toyvm.frame import Frame
         frame = Frame(self)
         # setup parameters
-        assert len(self.argnames) == len(args_w)
-        for varname, w_arg in zip(self.argnames, args_w):
+        assert len(self.code.argnames) == len(args_w)
+        for varname, w_arg in zip(self.code.argnames, args_w):
             frame.locals[varname] = w_arg
         #
         return frame.run()

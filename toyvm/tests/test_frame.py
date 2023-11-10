@@ -3,13 +3,13 @@ from toyvm.opcode import OpCode, CodeObject
 from toyvm.objects import W_Int, W_Str, W_Function
 
 def make_Frame(code):
-    w_func = W_Function(code.name, [], code, {})
+    w_func = W_Function(code.name, code, {})
     return Frame(w_func)
 
 class TestFrame:
 
     def test_simple(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Int(2)),
             OpCode('load_const', W_Int(4)),
             OpCode('add'),
@@ -20,7 +20,7 @@ class TestFrame:
         assert w_res == W_Int(6)
 
     def test_locals(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Int(2)),
             OpCode('store_local', 'a'),
             OpCode('load_local', 'a'),
@@ -31,7 +31,7 @@ class TestFrame:
         assert w_res == W_Int(2)
 
     def test_add_str(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Str('hello ')),
             OpCode('load_const', W_Str('world')),
             OpCode('add'),
@@ -42,7 +42,7 @@ class TestFrame:
         assert w_res == W_Str('hello world')
 
     def test_mul_int(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Int(2)),
             OpCode('load_const', W_Int(4)),
             OpCode('mul'),
@@ -53,7 +53,7 @@ class TestFrame:
         assert w_res == W_Int(8)
 
     def test_mul_str(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_const', W_Str('x')),
             OpCode('load_const', W_Int(4)),
             OpCode('mul'),
@@ -64,7 +64,7 @@ class TestFrame:
         assert w_res == W_Str('xxxx')
 
     def test_br_if(self):
-        code = CodeObject('fn', [
+        code = CodeObject('fn', [], [
             OpCode('load_local', 'a'),
             OpCode('load_const', W_Int(0)),
             OpCode('gt'),

@@ -43,7 +43,7 @@ class ModuleCompiler:
     def compile(self):
         for funcdef in self.funcdefs:
             comp = FuncDefCompiler(funcdef, self.w_mod)
-            w_func = comp.compile()
+            w_func = comp.make_func()
             if w_func.name in self.w_mod.green_funcs:
                 w_func.is_green = True
             self.w_mod.globals_w[w_func.name] = w_func
@@ -55,9 +55,9 @@ class FuncDefCompiler:
     def __init__(self, funcdef, w_mod):
         self.funcdef = funcdef
         self.w_mod = w_mod
-        self.code = CodeObject(funcdef.name, [])
-        self.label_counter = 0
         self.argnames = [a.arg for a in funcdef.args.args]
+        self.code = CodeObject(funcdef.name, self.argnames, [])
+        self.label_counter = 0
         self.compute_local_vars()
 
     def compute_local_vars(self):
@@ -90,12 +90,15 @@ class FuncDefCompiler:
     def pc(self):
         return len(self.code.body)
 
-    def compile(self):
+    def make_code(self):
         self.compile_many_stmts(self.funcdef.body)
         self.emit('load_const', w_None)
         self.emit('return')
-        return W_Function(self.funcdef.name, self.argnames, self.code,
-                          self.w_mod.globals_w)
+        return self.code
+
+    def make_func(self):
+        code = self.make_code()
+        return W_Function(self.funcdef.name, code, self.w_mod.globals_w)
 
     def compile_many_stmts(self, stmts):
         for stmt in stmts:
