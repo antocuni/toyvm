@@ -1,6 +1,10 @@
 from toyvm.frame import Frame
 from toyvm.opcode import OpCode, CodeObject
-from toyvm.objects import W_Int, W_Str
+from toyvm.objects import W_Int, W_Str, W_Function
+
+def make_Frame(code):
+    w_func = W_Function(code.name, [], code, {})
+    return Frame(w_func)
 
 class TestFrame:
 
@@ -11,7 +15,7 @@ class TestFrame:
             OpCode('add'),
             OpCode('return')
         ])
-        frame = Frame(code)
+        frame = make_Frame(code)
         w_res = frame.run()
         assert w_res == W_Int(6)
 
@@ -22,7 +26,7 @@ class TestFrame:
             OpCode('load_local', 'a'),
             OpCode('return')
         ])
-        frame = Frame(code)
+        frame = make_Frame(code)
         w_res = frame.run()
         assert w_res == W_Int(2)
 
@@ -33,7 +37,7 @@ class TestFrame:
             OpCode('add'),
             OpCode('return')
         ])
-        frame = Frame(code)
+        frame = make_Frame(code)
         w_res = frame.run()
         assert w_res == W_Str('hello world')
 
@@ -44,7 +48,7 @@ class TestFrame:
             OpCode('mul'),
             OpCode('return')
         ])
-        frame = Frame(code)
+        frame = make_Frame(code)
         w_res = frame.run()
         assert w_res == W_Int(8)
 
@@ -55,7 +59,7 @@ class TestFrame:
             OpCode('mul'),
             OpCode('return')
         ])
-        frame = Frame(code)
+        frame = make_Frame(code)
         w_res = frame.run()
         assert w_res == W_Str('xxxx')
 
@@ -74,12 +78,12 @@ class TestFrame:
             OpCode('label', 'endif_0'),
             OpCode('abort', "unreachable"),
         ])
-        frame = Frame(code)
+        frame = make_Frame(code)
         frame.locals['a'] = W_Int(10)
         w_res = frame.run()
         assert w_res == W_Int(3)
         #
-        frame = Frame(code)
+        frame = make_Frame(code)
         frame.locals['a'] = W_Int(-10)
         w_res = frame.run()
         assert w_res == W_Int(4)

@@ -7,7 +7,8 @@ from toyvm.compiler import toy_compile
 class TestRainbow:
 
     def peval(self, code):
-        self.interp = RainbowInterpreter(code)
+        w_func = W_Function(code.name, [], code, {})
+        self.interp = RainbowInterpreter(w_func)
         self.interp.run()
         return self.interp.out
 
@@ -130,8 +131,8 @@ class TestRainbow:
             OpCode('abort', 'unreachable')
         ]
         #
-        w_f1 = W_Function('f1', 'a', code)
-        w_f2 = W_Function('f2', 'a', code2)
+        w_f1 = W_Function('f1', 'a', code, {})
+        w_f2 = W_Function('f2', 'a', code2, {})
         assert w_f1.call(W_Int(0)) == W_Int(6)
         assert w_f1.call(W_Int(1)) == W_Int(5)
         assert w_f2.call(W_Int(0)) == W_Int(6)
