@@ -68,6 +68,9 @@ class FuncDefCompiler:
                 assert len(node.targets) == 1
                 varname = self.get_Name(node.targets[0])
                 self.local_vars.add(varname)
+            elif isinstance(node, ast.For):
+                varname = self.get_Name(node.target)
+                self.local_vars.add(varname)
 
     def new_label(self, stem):
         n = self.label_counter

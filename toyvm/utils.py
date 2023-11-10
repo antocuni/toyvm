@@ -1,3 +1,5 @@
+import difflib
+
 class ColorFormatter:
     black = '30'
     darkred = '31'
@@ -30,3 +32,18 @@ class ColorFormatter:
 
 # create a global instance, so that you can just do Color.set('red', ....)
 Color = ColorFormatter(use_colors=True)
+
+
+def print_diff(a, b, fromfile, tofile):
+    a = a.splitlines()
+    b = b.splitlines()
+    diff = difflib.unified_diff(a, b, fromfile, tofile, lineterm="")
+    print()
+    for line in diff:
+        if line.startswith('+'):
+            line = Color.set('yellow', line)
+        elif line.startswith('-'):
+            line = Color.set('red', line)
+        elif line.startswith('@@'):
+            line = Color.set('fuchsia', line)
+        print(line)

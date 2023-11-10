@@ -1,6 +1,7 @@
 import textwrap
+import difflib
 from dataclasses import dataclass
-from toyvm.utils import Color
+from toyvm.utils import Color, print_diff
 
 STACK_EFFECT = {
     # opname: (num_pops, num_pushes)
@@ -125,12 +126,10 @@ class CodeObject:
         print(self.dump(show_pc=show_pc, use_colors=use_colors))
 
     def equals(self, expected):
-        dumped = textwrap.dedent(self.dump())
         expected = textwrap.dedent(expected).strip('\n')
-        if dumped != expected:
-            print('got')
-            print(dumped)
-            print()
-            print('expected')
-            print(expected)
-        return dumped == expected
+        got = textwrap.dedent(self.dump())
+        if expected == got:
+            return True
+        else:
+            print_diff(expected, got, 'expected', 'got')
+            return False
