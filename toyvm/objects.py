@@ -34,6 +34,8 @@ class W_Str(W_Object):
 @dataclass
 class W_Function(W_Object):
     type = 'function'
+    is_green = False
+    #
     name: str
     argnames: list[str]
     code: CodeObject

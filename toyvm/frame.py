@@ -112,6 +112,8 @@ class Frame:
         w_obj = self.w_func.globals_w[name]
         self.push(w_obj)
 
+    op_load_nonlocal_green = op_load_nonlocal
+
     def op_label(self, l):
         assert self.labels[l] == self.pc
 

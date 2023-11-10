@@ -310,3 +310,23 @@ class TestCompiler:
         w_inc = self.w_mod.globals_w['inc']
         assert w_inc.call(W_Int(2)) == W_Int(3)
         assert w_foo.call(W_Int(2), W_Int(9)) == W_Int(30)
+
+    def test_green_function(self):
+        w_foo = self.compile("""
+        def foo():
+            return INC(5)
+
+        @green
+        def INC(x):
+            return x + 1
+        """)
+        assert not self.w_mod.globals_w['foo'].is_green
+        assert self.w_mod.globals_w['INC'].is_green
+        assert w_foo.call() == W_Int(6)
+        if self.mode == 'rainbow':
+            assert w_foo.code.equals("""
+            load_const W_Int(6)
+            return
+            load_const w_None
+            return
+            """)

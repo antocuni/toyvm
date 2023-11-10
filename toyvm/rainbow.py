@@ -189,3 +189,11 @@ class RainbowInterpreter:
             self.pop_label_map()
         #
         return pc_endfor+1
+
+    def op_call(self, pc, op, nargs):
+        if self.n_greens() >= nargs + 1:
+            w_func = self.greenframe.stack[-nargs-1]
+            if w_func.is_green:
+                self.op_green(pc, op, *op.args)
+                return
+        self.op_red(pc, op, *op.args)

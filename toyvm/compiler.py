@@ -14,15 +14,41 @@ except ImportError:
 
 def toy_compile(src, filename='<unknown>'):
     src = textwrap.dedent(src)
-    root = ast.parse(src, filename)
-    w_mod = W_Module(globals_w={})
-    #
-    for funcdef in root.body:
-        assert isinstance(funcdef, ast.FunctionDef)
-        comp = FuncDefCompiler(funcdef, w_mod)
-        w_func = comp.compile()
-        w_mod.globals_w[w_func.name] = w_func
-    return w_mod
+    comp = ModuleCompiler(src, filename)
+    return comp.compile()
+
+class ModuleCompiler:
+
+    def __init__(self, src, filename):
+        self.root = ast.parse(src, filename)
+        self.w_mod = W_Module(globals_w={})
+        self.w_mod.green_funcs = set()
+        self.funcdefs = []
+        for funcdef in self.root.body:
+            assert isinstance(funcdef, ast.FunctionDef)
+            self.funcdefs.append(funcdef)
+        self.init_funcdefs()
+
+    def init_funcdefs(self):
+        for funcdef in self.funcdefs:
+            if self.is_green(funcdef):
+                self.w_mod.green_funcs.add(funcdef.name)
+
+    def is_green(self, funcdef):
+        for deco in funcdef.decorator_list:
+            if isinstance(deco, ast.Name) and deco.id == 'green':
+                return True
+        return False
+
+    def compile(self):
+        for funcdef in self.funcdefs:
+            comp = FuncDefCompiler(funcdef, self.w_mod)
+            w_func = comp.compile()
+            if w_func.name in self.w_mod.green_funcs:
+                w_func.is_green = True
+            self.w_mod.globals_w[w_func.name] = w_func
+        return self.w_mod
+
 
 class FuncDefCompiler:
 
@@ -189,7 +215,10 @@ class FuncDefCompiler:
             else:
                 self.emit('load_local', name)
         else:
-            self.emit('load_nonlocal', name)
+            if name in self.w_mod.green_funcs:
+                self.emit('load_nonlocal_green', name)
+            else:
+                self.emit('load_nonlocal', name)
 
     def expr_Tuple(self, expr):
         for item in expr.elts:

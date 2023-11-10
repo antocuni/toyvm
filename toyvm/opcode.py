@@ -10,6 +10,7 @@ STACK_EFFECT = {
     'load_local_green': (0, 1),
     'store_local_green': (1, 0),
     'load_nonlocal': (0, 1),
+    'load_nonlocal_green': (0, 1),
     'return': (1, 0),
     'abort': (0, 0),
     'add': (2, 1),
@@ -34,6 +35,7 @@ PURE_OPS = set([
     'mul',
     'make_tuple',
     'unroll',
+    'load_nonlocal_green',
 ])
 
 @dataclass
