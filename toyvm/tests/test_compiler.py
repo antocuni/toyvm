@@ -64,6 +64,29 @@ class TestCompiler:
             """)
         assert w_func.call() == W_Int(7)
 
+    def test_i32_add(self):
+        w_func = self.compile("""
+        def foo():
+            return __i32_add__(2, 3)
+        """)
+        assert w_func.call() == W_Int(5)
+        if self.mode == 'interp':
+            assert w_func.code.equals("""
+            load_const W_Int(2)
+            load_const W_Int(3)
+            i32_add
+            return
+            load_const w_None
+            return
+            """)
+        else:
+            assert w_func.code.equals("""
+            load_const W_Int(5)
+            return
+            load_const w_None
+            return
+            """)
+
     def test_locals(self):
         w_func = self.compile("""
         def foo():

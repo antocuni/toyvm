@@ -89,6 +89,14 @@ class Frame:
     def op_lt(self):
         self._op_compare(operator.lt)
 
+    def op_i32_add(self):
+        w_b = self.pop()
+        w_a = self.pop()
+        assert w_a.type == 'int'
+        assert w_b.type == 'int'
+        w_c = W_Int(w_a.value + w_b.value)
+        self.push(w_c)
+
     def _op_compare(self, cmpfunc):
         w_b = self.pop()
         w_a = self.pop()

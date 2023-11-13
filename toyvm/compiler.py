@@ -261,7 +261,7 @@ class FuncDefCompiler:
 
     def expr_Call(self, expr):
         if (isinstance(expr.func, ast.Name) and
-            expr.func.id in ('print', 'UNROLL')):
+            expr.func.id in ('print', 'UNROLL', '__i32_add__')):
             self.expr_Call_builtin(expr)
             return
         #
@@ -279,5 +279,8 @@ class FuncDefCompiler:
         elif funcname == 'UNROLL':
             assert len(expr.args) == 1
             self.emit('unroll')
+        elif funcname == '__i32_add__':
+            assert len(expr.args) == 2
+            self.emit('i32_add')
         else:
             assert False, f'unsupported function: {funcname}'
