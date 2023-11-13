@@ -190,10 +190,22 @@ class RainbowInterpreter:
         #
         return pc_endfor+1
 
+    def op_make_function(self, pc, op, code):
+        assert False, 'make_function can be used only inside a @green function'
+
     def op_call(self, pc, op, nargs):
         if self.n_greens() >= nargs + 1:
             w_func = self.greenframe.stack[-nargs-1]
             if w_func.is_green:
                 self.op_green(pc, op, *op.args)
+                w_result = self.greenframe.stack[-1]
+                if isinstance(w_result, W_Function):
+                    self.recursive_peval()
                 return
         self.op_red(pc, op, *op.args)
+
+    def recursive_peval(self):
+        w_func = self.greenframe.pop()
+        assert isinstance(w_func, W_Function)
+        w_func2 = peval(w_func)
+        self.greenframe.push(w_func2)

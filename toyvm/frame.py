@@ -181,6 +181,8 @@ class Frame:
 
     def op_make_function(self, code):
         # let's create a closure over the COPY of the current locals
-        closure = self.w_func.closure.copy_and_append(self.locals.copy())
+        closure = self.w_func.closure.copy_and_append(
+            f'{self.w_func.name}:locals',
+            self.locals.copy())
         w_func = W_Function(code.name, code, closure)
         self.push(w_func)

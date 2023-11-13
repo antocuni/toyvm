@@ -33,12 +33,16 @@ class W_Str(W_Object):
 
 class Closure:
 
-    def __init__(self, scopes):
+    def __init__(self, name, scopes):
+        self.name = name
         self.scopes = scopes
 
-    def copy_and_append(self, ns_w):
+    def __repr__(self):
+        return f"<Closure '{self.name}'>"
+
+    def copy_and_append(self, name, ns_w):
         new_scopes = self.scopes + [ns_w]
-        return Closure(new_scopes)
+        return Closure(name, new_scopes)
 
     def lookup(self, name):
         for ns_w in reversed(self.scopes):
@@ -119,4 +123,4 @@ class W_Module(W_Object):
     globals_w: dict[str, W_Object]
 
     def get_closure(self):
-        return Closure([self.globals_w])
+        return Closure('globals', [self.globals_w])

@@ -353,3 +353,36 @@ class TestCompiler:
             load_const w_None
             return
             """)
+
+    def test_call_green_closure(self):
+        w_foo = self.compile("""
+        def foo(a):
+            return make_adder(5)(a)
+
+        @green
+        def make_adder(X):
+            def add(y):
+                return X + y
+            return add
+        """)
+        assert w_foo.call(W_Int(10)) == W_Int(15)
+        if self.mode == 'rainbow':
+            assert w_foo.code.equals("""
+            load_const W_Function(name='add', code=<CodeObject 'add<peval>'>, closure=<Closure 'make_adder:locals'>)
+            load_local a
+            call 1
+            return
+            load_const w_None
+            return
+            """)
+            #
+            w_add5 = w_foo.code.body[0].args[0]
+            assert w_add5.name == 'add'
+            assert w_add5.code.equals("""
+            load_const W_Int(5)
+            load_local y
+            add
+            return
+            load_const w_None
+            return
+            """)
