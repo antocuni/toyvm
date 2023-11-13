@@ -42,18 +42,22 @@ class ModuleCompiler:
 
     def compile(self):
         for funcdef in self.funcdefs:
-            comp = FuncDefCompiler(funcdef, self.w_mod)
+            is_green = (funcdef.name in self.w_mod.green_funcs)
+            comp = FuncDefCompiler(funcdef,
+                                   is_green = is_green,
+                                   green_nonlocals = self.w_mod.green_funcs,
+                                   w_mod = self.w_mod)
             w_func = comp.make_func()
-            if w_func.name in self.w_mod.green_funcs:
-                w_func.is_green = True
             self.w_mod.globals_w[w_func.name] = w_func
         return self.w_mod
 
 
 class FuncDefCompiler:
 
-    def __init__(self, funcdef, w_mod):
+    def __init__(self, funcdef, *, is_green, green_nonlocals, w_mod):
         self.funcdef = funcdef
+        self.is_green = is_green
+        self.green_nonlocals = green_nonlocals
         self.w_mod = w_mod
         self.argnames = [a.arg for a in funcdef.args.args]
         self.code = CodeObject(funcdef.name, self.argnames, [])
@@ -63,14 +67,16 @@ class FuncDefCompiler:
     def compute_local_vars(self):
         self.local_vars = set()
         self.local_vars_green = set()
-        self.local_vars.update(set(self.argnames))
-
+        #
         def add(varname):
             if varname.isupper():
                 self.local_vars_green.add(varname)
             else:
                 self.local_vars.add(varname)
-
+        #
+        for argname in self.argnames:
+            add(argname)
+        #
         for node in ast.walk(self.funcdef):
             if isinstance(node, ast.Assign):
                 assert len(node.targets) == 1
@@ -78,7 +84,7 @@ class FuncDefCompiler:
             elif isinstance(node, ast.For):
                 varname = self.get_Name(node.target)
                 add(varname)
-            elif isinstance(node, ast.FunctionDef):
+            elif isinstance(node, ast.FunctionDef) and node is not self.funcdef:
                 varname = node.name
                 self.local_vars_green.add(varname)
 
@@ -108,7 +114,9 @@ class FuncDefCompiler:
 
     def make_func(self):
         code = self.make_code()
-        return W_Function(self.funcdef.name, code, self.w_mod.get_closure())
+        w_func = W_Function(self.funcdef.name, code, self.w_mod.get_closure())
+        w_func.is_green = self.is_green
+        return w_func
 
     def compile_many_stmts(self, stmts):
         for stmt in stmts:
@@ -188,7 +196,12 @@ class FuncDefCompiler:
         self.emit('label', endfor)
 
     def stmt_FunctionDef(self, stmt):
-        inner_comp = FuncDefCompiler(stmt, self.w_mod)
+        assert self.is_green, 'closures are allowed only inside green functions'
+        inner_comp = FuncDefCompiler(
+            stmt,
+            is_green = False,
+            green_nonlocals = self.local_vars_green.copy(),
+            w_mod = self.w_mod)
         code = inner_comp.make_code()
         self.emit('make_function', code)
         self.emit('store_local_green', stmt.name)
@@ -236,7 +249,7 @@ class FuncDefCompiler:
         elif name in self.local_vars:
             self.emit('load_local', name)
         else:
-            if name in self.w_mod.green_funcs:
+            if name in self.green_nonlocals:
                 self.emit('load_nonlocal_green', name)
             else:
                 self.emit('load_nonlocal', name)

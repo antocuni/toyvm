@@ -14,11 +14,11 @@ class TestCompiler:
     def compilation_mode(self, request):
         self.mode = request.param
 
-    def compile(self, src):
+    def compile(self, src, *, auto_rainbow=True):
         self.w_mod = toy_compile(src)
         w_func = list(self.w_mod.globals_w.values())[0] # the first func
         self.w_func = w_func
-        if self.mode == 'rainbow':
+        if self.mode == 'rainbow' and auto_rainbow:
             self.w_func2 = peval(self.w_func)
             return self.w_func2
         else:
@@ -331,15 +331,25 @@ class TestCompiler:
             return
             """)
 
-    # XXX fix rainbow
     def test_closure(self):
         w_make_adder = self.compile("""
-        def make_adder(x):
+        @green
+        def make_adder(X):
             def add(y):
-                return x + y
+                return X + y
             return add
-        """)
+        """, auto_rainbow=False)
         w_add3 = w_make_adder.call(W_Int(3))
         w_add5 = w_make_adder.call(W_Int(5))
         assert w_add3.call(W_Int(4)) == W_Int(7)
         assert w_add5.call(W_Int(4)) == W_Int(9)
+        if self.mode == 'rainbow':
+            w_add3_peval = peval(w_add3)
+            assert w_add3_peval.code.equals("""
+            load_const W_Int(3)
+            load_local y
+            add
+            return
+            load_const w_None
+            return
+            """)
